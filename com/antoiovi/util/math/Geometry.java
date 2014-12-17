@@ -6,13 +6,14 @@ public class Geometry {
  * i valori sono distanziati di step; 
  * @param init
  * @param end
- * @param step
+ * @param step passo di distanza dei punti. S è un INT allora viene chiaata l'altra funzione che 
+ * 		divide la scala in n pezzi uguali
  * @return
  */
 	public static double[] Scale(double init, double end, double step) {
 		if (step>=(end-init))
 		return null;
-		int x = (int) ((end - init) / step + 1 / step);
+		int x = (int) ((end - init) / step + 1 );
 		//x=x<1?10:x;
 		double a[] = new double[x];
 		//double s = 0;
@@ -27,7 +28,8 @@ public class Geometry {
 	 * GENERA UNA SCALA di number elementi che inizia da init e finisce con end
 	 * @param init
 	 * @param end
-	 * @param number
+	 * @param number NUMERO DI ELEMENTI I CUI DIVIDERE LA SCALA. Se è double allora viene chiaat 
+	 * 				l'altra funzione , in cui rappresenta il passo
 	 * @return
 	 */
 	public static double[] Scale(double init, double end, int number) {
@@ -179,4 +181,35 @@ step=step<0?-step:step;
 		}
 		return a;
 	}
+	/**
+	 * Crea un nuovo array con i valori di un altro array di cui viene calcolato il Log10
+	 * @param data array contenennte i valorri di cui si vuole calcolare il logaritmo; non viene odificato
+	 * @return un nuovo array di double con il Log10 di data
+	 */
+	public static double[] LogTransformationNewArray(double data[]){
+		double array[]=new double[data.length];
+		for(int x=0;x<data.length;x++){
+			array[x]=Math.log10(data[x]);
+		}
+		return array;
+	}
+	/**
+	 * Trasforma i valori in array in logaritmic value base 10
+	 * @param data	l'array di valory di cui si vuole il log. Viene modificato con il valore Log10
+	 */
+	public static void LogTransformation(double data[]){
+	
+		for(int x=0;x<data.length;x++){
+			data[x]=Math.log10(data[x]);
+		}
+		return ;
+	}
+	public static void Exp10(double data[]){
+		
+		for(int x=0;x<data.length;x++){
+			data[x]=Math.pow(10,data[x]);
+			}
+		return ;
+	}
+	
 }

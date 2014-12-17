@@ -1,5 +1,6 @@
 package com.antoiovi.swing;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -9,7 +10,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
-
+import java.awt.Stroke;
+import java.awt.Toolkit;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
@@ -24,6 +26,9 @@ import javax.swing.JPopupMenu;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+
+
+
 
 
 import javax.swing.JMenuItem;
@@ -55,12 +60,33 @@ import java.awt.event.ActionListener;
  *        	  int max=GenerateScale.getMax(f);
  *        	 double  y[]=GenerateScale.Scale(f[min], f[max],100); 
  *         	 panel.setFunctions(f);
+ *         ItemListeer : per intercettare i cjechboxmenuItems
+ *         16/12/2014 : revisione 
+ *         Utilizzo: Implementazione dell'interfaccia APDiagram dove sono riportati
+ *         iprototopi delle  funzioni usate
+ *         
+ *         addStringa(String,x,y) Stmpa una stringa nella posizione xy
+ *         clearStringhe(); pulisce le stringhe
+ *         
  */
 
-public class APanelDiagram extends JPanel implements ItemListener, ActionListener {
+public class APanelDiagram extends JPanel implements ItemListener, ActionListener,APDiagram {
+
 	// PROPIETA' AFFERENTI AI DATI
 	private double x_axis[];
 	private double y_axis[];
+	/**
+	 * Valori da utilizzare per la stringa: vengono modificati in base alla opzione di visualizzazione
+	 * senza alterare i dati originali
+	 */
+	private  double x_axis_str[];
+	private  double y_axis_str[];
+	public void setX_axis_str(double[] x_axis_str) {
+		this.x_axis_str = x_axis_str;
+	}
+	public void setY_axis_str(double[] y_axis_str) {
+		this.y_axis_str = y_axis_str;
+	}
 	/**
 	 * PROPIETA ATTINENTI GLI ASSI
 	 */
@@ -68,12 +94,45 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	 * Margine sinistro: margine + larghezza massima testo: COORDINATA X ASSE
 	 * ORDINATE SE I CLICK MOSE SONO A DESTRA APRO MENU LABL
 	 */
-	static int margin_left;// = margin + size_label_y.width;
+	  int margin_left;// = margin + size_label_y.width;
 	/**
 	 * Margine inferiore margine + altezza testo; corrisponde alla ordinata asse
 	 * x SE I CLICK MOSE SONO A SOTT APRO MENU LABEL
 	 */
-	static int margin_bottom;// = margin + size_label_y.height;
+	  int margin_bottom;
+	 
+	 public  double[] getX_axis_str() {
+		return x_axis_str;
+	}
+	public  double[] getY_axis_str() {
+		return y_axis_str;
+	}
+	public  int getMargin_left() {
+		return margin_left;
+	}
+	public  int getMargin_bottom() {
+		return margin_bottom;
+	}
+	public  int getAdaptxscale() {
+		return ADAPTXSCALE;
+	}
+	public  int getAdaptyscale() {
+		return ADAPTYSCALE;
+	}
+	public  int getAdaptxyscale() {
+		return ADAPTXYSCALE;
+	}
+	public  int getAdaptscaleblocked() {
+		return ADAPTSCALEBLOCKED;
+	}
+	
+	
+	
+	
+	public  boolean isMenu_abilitated() {
+		return menu_abilitated;
+	}
+	// = margin + size_label_y.height;
 	// PROPIETA' AFFERENTI LA SCALA
 	/**
 	 * sacala impostabile dll'utente; CAMBIABILE TRAMITE MENUPOPUP, PER 2 E
@@ -102,27 +161,25 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	 * AADAPTXYSCALEBLOCKED e ADAPTXYSCALE
 	 */
 	private int adapt_scale;
-	public static final int ADAPTXSCALE = 1;
-	public static final int ADAPTYSCALE = 2;
-	public static final int ADAPTXYSCALE = 3;
-	public static final int ADAPTSCALEBLOCKED = 4;
+	public  final int ADAPTXSCALE = 1;
+	public  final int ADAPTYSCALE = 2;
+	public  final int ADAPTXYSCALE = 3;
+	public  final int ADAPTSCALEBLOCKED = 4;
 
 	// PROPIETA' AFFERENTI LE ETICHETTE
 
 	/**
 	 * Stabilisce come deve essere disposto il testo dei valori dell'asse x
 	 */
-	private int label_x;
-	public static final int LABEL_X_NORMAL = 1;
+	/*private int label_x;
+	public  final int LABEL_X_NORMAL = 1;
 	public static final int LABEL_X_ADAPT = 2;
 	public static final int LABEL_X_ALTERNATE = 3;
 	// Visualizza solo i valori 10, 100,1000, ....
-	public static final int LABEL_X_LOGARITM = 4;
+	public static final int LABEL_X_LOGARITM = 4;*/
 
 	private int margin = 20;
-	// Se logaritmic = true allora i valori dell'etichetta vengono elevati a 10
-	private boolean logaritmic_x = false;
-	private boolean logaritmic_y = false;
+	
 	/**
 	 * Rectangle delle etichette valory x
 	 */
@@ -143,52 +200,112 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	 * Funzione da disegnare
 	 */
 	private double functions[];
-
+	/**
+	 *  Lista di punti di cui disegnare ascissa e ordinata
+	 */
+	private List<Punto> punti;
+	
+	
+	/**
+	 * AGGIUNGE UN PUNTO DI CUI DISEGNARE LE ASISE E ORDINATE
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	public boolean addPunto(double x,double y) {
+		Punto e=new Punto();
+		e.x=x;
+		e.y=y;
+		return punti.add(e);
+	}
+	public boolean addPunto(Punto p) {
+			return punti.add(p);
+	}
+	/**
+	 * Colore con cui si disegano le coordinate del punto
+	 */
+	Color color_punto=Color.green;
+	
+	/**
+	 * Elimina tutti i punti di cui vedere le coordinate
+	 */
+	public void clearPunti() {
+		punti.clear();
+	}
+	/**
+	 *  Stringhe con coordinate in cui scriverle
+	 */
+	private List<Stringa> stringhe;
+	
+	public void setStringa(int index, String str) {
+		Stringa stri=stringhe.get(index);
+		stri.testo=str;
+	}
+	public boolean addStringa(String str,double x,double y) {
+		Stringa stri=new Stringa();
+		stri.testo=str;
+		stri.x=x;
+		stri.y=y;
+		return stringhe.add(stri);
+	}
+	/**
+	 * eliminoo le stringhe visualizzate
+	 */
+	public void clearStringhe() {
+		stringhe.clear();
+	}
+	
+	
 	/**
 	 * DATI ATTENENTI LA GRIGLIA
 	 */
-	private Color colorGridHoriz = Color.yellow;
-	private Color colorGridVert = Color.yellow;
-	private boolean showGridHorizontal = false;
+	private Color colorGridHoriz = Color.gray;
+	private Color colorGridVert = Color.gray;
+	private boolean showGridHorizontal = true;
 	private boolean showGridVertical = true;
 
-	/**
-	 * 
-	 * @param functions
-	 */
-	public void setFunctions(double[] functions) {
-		this.functions = functions;
-	}
-
 	private String formatNumberAxis = "%2.2f";
-	private String formatAxisExp = "%2.2e";
-	// private List<Drawobject> drawobects;
-	private static Rectangle rect_view;
-	private static Rectangle rect_panel;
-	private static Container parent;
+	
+	private  Rectangle rect_view;
+	private  Rectangle rect_panel;
+	private  Container parent;
 
+	/***
+ * 	ELEMENTI DEI MENU DI CONTESTO
+ */
 	private JCheckBoxMenuItem chckbxmnAdattascala;
-	private static JPopupMenu popupMenuLabel;
-	private static JPopupMenu popupMenu;
-	private static JMenuItem mntmScala_x_2;
-	private static JMenuItem mntmScala_div_2;
+	private  JPopupMenu popupX;
+	private  JPopupMenu popupMenu;
+	private  JMenuItem mntmScala_x_2;
+	private  JMenuItem mntmScala_div_2;
 	private JMenuItem mntmAsseY_2;
 	private JMenuItem mntmAsseX1_2;
 	private JMenuItem mntmAsseY2x;
 	private JMenuItem mntmAsseX2x;
+	private JCheckBoxMenuItem chckbxmntmGrigliaOrizz;
+	private JCheckBoxMenuItem chckbxmntmGridVert;
+	private JMenuItem mntmLog;
+	private JMenuItem mntm10E;
+	private  JPopupMenu popupY;
+	private JMenuItem menuItem;
+	private JMenuItem menuItem_1;
+	private JMenuItem mntmResety;
+	private JMenuItem mntmResetx;
+	private   boolean menu_abilitated=true;
 
-	/**
-	 * Create the panel.
-	 */
+	/************************************************
+	 * Create the panel.	COSTRUTTORE				*
+	 ************************************************/
 	public APanelDiagram() {
 		super();
+		this.setBackground(Color.white);
 		// formatNumberAxis = formatAxisExp;
 		popupMenu = new JPopupMenu();
 		addPopup(this, popupMenu);
 
 		chckbxmnAdattascala = new JCheckBoxMenuItem("Adatta A Frame");
-		mntmScala_x_2 = new JMenuItem("Scala x 2");
-		mntmScala_div_2 = new JMenuItem("Scala x 1/2");
+		mntmScala_x_2 = new JMenuItem("Scala per 2");
+		mntmScala_div_2 = new JMenuItem("Scala  per 1/2");
 
 		chckbxmnAdattascala.addItemListener(this);
 		chckbxmnAdattascala.setActionCommand("AdattaAFrame");
@@ -212,15 +329,64 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		mntmAsseY2x = new JMenuItem("Asse Y 2x");
 		mntmAsseY2x.addActionListener(this);
 		popupMenu.add(mntmAsseY2x);
-
+		
+		chckbxmntmGrigliaOrizz = new JCheckBoxMenuItem("Griglia orizz.");
+		chckbxmntmGrigliaOrizz.setSelected(true);
+		popupMenu.add(chckbxmntmGrigliaOrizz);
+		/**
+		 * Per i checkbox menu item devo inserire itemListener
+		 */
+		chckbxmntmGrigliaOrizz.addItemListener(this);
+		chckbxmntmGridVert = new JCheckBoxMenuItem("Griglia vert.");
+		chckbxmntmGridVert.setSelected(true);
+		popupMenu.add(chckbxmntmGridVert);
+		chckbxmntmGridVert.addItemListener(this);
 		mntmScala_div_2.addActionListener(this);
 
-		popupMenuLabel = new JPopupMenu();
-		addPopup(this, popupMenuLabel);
+		popupX = new JPopupMenu();
+		addPopup(this, popupX);
 
-		JMenuItem mntmNewMenuItem = new JMenuItem("New menu item");
-		popupMenuLabel.add(mntmNewMenuItem);
-
+		mntm10E = new JMenuItem("exp10");
+		popupX.add(mntm10E);
+		mntm10E.addActionListener(this);
+		
+		mntmLog = new JMenuItem("log10");
+		mntmLog.addActionListener(this);
+		popupX.add(mntmLog);
+		
+		mntmResetx = new JMenuItem("resetX");
+		mntmResetx.addActionListener(this);
+		popupX.add(mntmResetx);
+		
+		
+		popupY = new JPopupMenu();
+		add(popupY);
+		
+		menuItem = new JMenuItem("exp10Y");
+		menuItem.setActionCommand("exp10Y");
+		menuItem.addActionListener(this);
+		popupY.add(menuItem);
+		
+		menuItem_1 = new JMenuItem("log10Y");
+		menuItem_1.addActionListener(this);
+		menuItem_1.setActionCommand("log10Y");
+		popupY.add(menuItem_1);
+		
+		mntmResety = new JMenuItem("resetY");
+		mntmResety.addActionListener(this);
+		popupY.add(mntmResety);
+		
+		/**
+		 * Creo l'array dei punti da visualizzare con coordinate
+		 */
+		punti =new ArrayList<Punto>();
+		
+		
+		/**
+		 * Creo lalista d stringhe da visualizzare con coordinate
+		 */
+		stringhe=new ArrayList<Stringa>();
+		
 		// default data
 		x_axis = new double[10];
 		y_axis = new double[10];
@@ -228,23 +394,27 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 			x_axis[x] = x;
 			y_axis[x] = x;
 		}
+		x_axis_str =new double[x_axis.length];
+		System.arraycopy(x_axis, 0, x_axis_str,0, x_axis.length);
+		y_axis_str =new double[y_axis.length];
+		System.arraycopy(y_axis, 0, y_axis_str,0, y_axis.length);
 
 	}
+	/*************************************************************
+	 * 		METODO PAINTCOMPONENT
+	************************************************************* */
 
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
+		
 		/**
 		 * Creo gli array con le aree delle etichette
 		 */
 		rect_x_label = new ArrayList<Rectangle>();
 		rect_y_label = new ArrayList<Rectangle>();
-		/**
-		 * Creo l'array delle coordinate, VERRà INIZIALIZZATO IN BASE AALLA
-		 * SCAALA
-		 */
-		x_coordinate = new double[x_axis.length];
-
+		
+		
 		Graphics2D g2d = (Graphics2D) g;
 		// Sposta l'origine in basso e rende positivo lasse y i su
 		g2d.translate(0, getHeight());
@@ -266,8 +436,8 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		int hgt;
 		int adv;
 		Dimension size_label_y = new Dimension(margin, margin);
-		for (int z = 0; z < y_axis.length; z++) {
-			String s = String.format(formatNumberAxis, y_axis[z]);
+		for (int z = 0; z < y_axis_str.length; z++) {
+			String s = String.format(formatNumberAxis, y_axis_str[z]);
 			// get the height of a line of text in this
 			// font and render context
 			hgt = metrics.getHeight();
@@ -327,7 +497,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 			// s=String.format("h2=%f \t h1=%f \t  \t h2-h1=%f",h2,h1,(h2-h1));
 			h = h < 1 ? 1 / h : h;
 			w = w < 1 ? 1 / w : w;
-			String s = String.format("h2=%f \t h1=%f \t  \t h=%f", h2, h1, h);
+			//String s = String.format("h2=%f \t h1=%f \t  \t h=%f", h2, h1, h);
 			x_scale_adapted = (rect_view.width - margin_left * 2) / w; // x_axis[x_axis.length
 																		// - 1];
 			y_scale_adapted = (rect_view.height - margin_bottom * 2) / h;
@@ -347,21 +517,16 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 			y_scale_adapted = y_scale;
 		}
 
-		GeneralPath pl = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
-
 		/**
 		 * DISEGNO ASSI
 		 */
-
-		double y_x_axis = margin_bottom;// y_axis[0] + margin_x;
-		double x0 = x_axis[0] + margin_left;// Origine =margine+larghezza massia
-
+		
 		/**
 		 * Creo l'array delle coordinate, VERRà INIZIALIZZATO IN BASE AALLA
 		 * SCAALA
 		 */
 		// test traslo i dtai di margin left
-		double x_coordinate[] = Geometry.CreteNewArray(x_axis);
+		 x_coordinate= Geometry.CreteNewArray(x_axis);
 
 		Geometry.Moltiply(x_coordinate, x_scale_adapted);
 		Geometry.Traslation(x_coordinate, margin_left - x_coordinate[0]);
@@ -373,20 +538,20 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		 * Estensione in ase alla scala
 		 */
 		Geometry.Moltiply(y_coordinate, y_scale_adapted);
-		System.out.println("y[0]=" + y_coordinate[0]);
+		//System.out.println("y[0]=" + y_coordinate[0]);
 		/**
-		 * Traslazione in base al matgine sinistro
+		 * Traslazione in base al margine sinistro
 		 */
 		int f = Geometry.getMin(y_coordinate);
 		Geometry.Traslation(y_coordinate, margin_bottom - y_coordinate[f]);// fy_coordinate[0]);
-		System.out.println("y 0 traslato" + y_coordinate[0] + "   Margine "
-				+ margin_bottom);
+	//	System.out.println("y 0 traslato" + y_coordinate[0] + "   Margine "
+	//			+ margin_bottom);
 		/**
 		 * Creo l'elenco delle coordinate dei punti ed i rectangle delle
 		 * etichette dell'asse x
 		 */
-		for (int x = 0; x < x_axis.length; x++) {
-			String s = String.format(formatNumberAxis, x_axis[x]);
+		for (int x = 0; x < x_axis_str.length; x++) {
+			String s = String.format(formatNumberAxis, x_axis_str[x]);
 			Rectangle rect = new Rectangle((int) x_coordinate[x], margin,
 					metrics.stringWidth(s), metrics.getHeight());
 			rect_x_label.add(rect);
@@ -401,6 +566,8 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		/**
 		 * Disegno asse Y
 		 */
+		
+		
 		g2d.drawLine((int) x_coordinate[0], (int) y_coordinate[0],
 				(int) x_coordinate[0],
 				(int) y_coordinate[y_coordinate.length - 1]);
@@ -421,8 +588,8 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		/**
 		 * Creo l'elenco dei rectangle delle etichette dell'asse y
 		 */
-		for (int x = 0; x < y_axis.length; x++) {
-			String s = String.format(formatNumberAxis, y_axis[x]);
+		for (int x = 0; x < y_axis_str.length; x++) {
+			String s = String.format(formatNumberAxis, y_axis_str[x]);
 			Rectangle rect = new Rectangle(margin, (int) y_coordinate[x],
 					metrics.stringWidth(s), metrics.getHeight());
 			rect_y_label.add(rect);
@@ -436,22 +603,27 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		if (functions != null) {
 			GeneralPath pl_f = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
 			pl_f.moveTo(x_coordinate[0], y_coordinate[0]);
-			double max = new_height;
-			for (int j = 0; j < x_coordinate.length; j++) {
+			//double max = new_height;
+			int k=(x_coordinate.length<=functions.length)?x_coordinate.length:functions.length;
+			for (int j = 0; j < k; j++) {
 				double yf = margin_bottom + functions[j] * y_scale_adapted;
 				// new_height=new_height > yf ? new_height: (long)yf;
-				System.out.println("x=  " + x_coordinate[j] + "  yf=" + yf);
+				//System.out.println("x=  " + x_coordinate[j] + "  yf=" + yf);
 				pl_f.lineTo(x_coordinate[j], yf);
 			}
 			g2d.draw(pl_f);
 		}
-
+		
 		/**
 		 * Paints le griglie
 		 */
 		paintGridHorizzontal(g2d);
 		paintGridVertical(g2d);
-
+/**
+ * DISEGA I PUNTI DI CUI SI VUOLE EVIDDENZIARE ASCISSA E COORDINATA
+ */
+	 paintPoints(g2d);
+	 paintStringhe(g2d);	
 		/**
 		 * Riporta le coordinate al top left
 		 */
@@ -461,11 +633,16 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		/**
 		 * Per permettere lo scroll nel scrollpane
 		 */
-		Dimension dimension = new Dimension((int) (new_width + margin_left),
-				(int) (new_height + margin_bottom));
+		Dimension dimension = new Dimension((int) (new_width +margin_left),
+				(int) (new_height +margin_bottom));
 		this.setPreferredSize(dimension);
 	}
 
+	/**********************************************************************************
+	 * 		FINE FUNZIONE PAINTCOMPONENT
+	 ***********************************************************************************/
+	
+	
 	/***************
 	 * Disegno le etichette asse X , conoscendo già i rect delle etichette ;
 	 * verifihe se vengono sovrapposte ed in base alle opzioni decido come
@@ -478,18 +655,23 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 
 		Rectangle r_prev = null;
 		for (int x = 0; x < rect_x_label.size(); x++) {
+			//double resto=x_axis[x]%10;
+			//if(resto==0){
 			Rectangle r = (Rectangle) rect_x_label.get(x);
-			String str = String.format(formatNumberAxis, x_axis[x]);
+			String str = String.format(formatNumberAxis, x_axis_str[x]);
 			// g.drawString(str, r.x, r.y);
 			if (r_prev != null) {
 				if (r.intersects(r_prev))
 					continue;
 				r_prev = r;
-				g.drawString(str, r.x, r.y);
+				g.drawString(str, r.x, r.y-r.height);
+				g.drawLine(r.x,r.y,r.x,(int)y_coordinate[0]);
 			} else {
 				r_prev = r;
-				g.drawString(str, r.x, r.y);
+				g.drawString(str, r.x, r.y-r.height);
+				g.drawLine(r.x,r.y,r.x,(int)y_coordinate[0]);
 			}
+			//}
 		}
 
 	}
@@ -499,9 +681,9 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		if (showGridHorizontal) {
 			Color savecolor = g.getColor();
 			g.setColor(colorGridHoriz);
-			int k = y_coordinate.length - 1;
+			int k = y_coordinate.length ;
 			int x1 = (int) x_coordinate[0];
-			int x2 = (int) x_coordinate[k];
+			int x2 = (int) x_coordinate[x_coordinate.length-1];
 			for (int x = 1; x < k; x++) {
 				int y = (int) y_coordinate[x];
 
@@ -513,9 +695,71 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	}
 
 	public void paintGridVertical(Graphics2D g) {
+		if (showGridVertical) {
+			Color savecolor = g.getColor();
+			g.setColor(colorGridVert);
+			int k = x_coordinate.length ;
+			int y1 = (int) y_coordinate[0];
+			int y2 = (int) y_coordinate[y_coordinate.length-1];
+			for (int j = 1; j < k; j++) {
+				int x = (int) x_coordinate[j];
+				g.drawLine(x, y1, x, y2);
+			}
+			g.setColor(savecolor);
+		}
 
 	}
-
+	/**
+	 * DISEGNO DEI PUNTI CHE VOGLIO EVIDENZIARE
+	 */
+	private void paintPoints(Graphics2D g2){
+		
+		Stroke savestroke= g2.getStroke();
+    		Color savecolor = g2.getColor();
+		
+		for (int x=0;x <punti.size();x++){
+			
+		Punto punto=punti.get(x);
+		g2.setColor(punto.color);
+		g2.setStroke(punto.stroke);
+		
+		double x1=ConvertXValue(punto.x);//=punto.x*x_scale_adapted;
+		
+		double y1=ConvertYValue(punto.y);//*y_scale_adapted;
+		g2.drawLine((int)x_coordinate[0],(int)y1,(int) x1,(int)y1);
+		g2.drawLine((int)x1,(int)y_coordinate[0],(int) x1,(int) y1);
+		}
+		g2.setColor(savecolor);
+		g2.setStroke(savestroke);
+		//gets rid of the copy
+    //    g2.dispose();
+	}
+	
+	private void paintStringhe(Graphics2D g2){
+		for (int x=0;x <stringhe.size();x++){
+		Stringa str=stringhe.get(x);
+		//System.out.println("punt= "+punto.x+"  "+punto.y);
+		double x1=ConvertXValue(str.x);//=punto.x*x_scale_adapted;
+		
+		double y1=ConvertYValue(str.y);//*y_scale_adapted;
+		g2.drawString(str.testo, (float)x1, (float)y1);
+		}
+		
+	}
+	
+	
+	double  ConvertXValue(double x1){
+		x1-=x_axis[0];
+		x1*=x_scale_adapted;
+		x1+=margin_left;
+		return x1;
+	}
+	double  ConvertYValue(double y1){
+		y1-=y_axis[0];
+		y1*=y_scale_adapted;
+		y1+=margin_bottom;
+		return y1;
+	}
 	/***************
 	 * Disegno le etichette asse Y , conoscendo già i rect delle etichette ;
 	 * verifihe se vengono sovrapposte ed in base alle opzioni decido come
@@ -529,7 +773,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		Rectangle r_prev = null;
 		for (int x = 0; x < rect_y_label.size(); x++) {
 			Rectangle r = (Rectangle) rect_y_label.get(x);
-			String str = String.format(formatNumberAxis, y_axis[x]);
+			String str = String.format(formatNumberAxis, y_axis_str[x]);
 			// g.drawString(str, r.x, r.y);
 			if (r_prev != null) {
 				if (r.intersects(r_prev))
@@ -555,7 +799,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	 * @param popup
 	 *            - il menu, che in base alla posizione verrà visualizzzato
 	 */
-	private static void addPopup(Component component, final JPopupMenu popup) {
+	private  void addPopup(Component component, final JPopupMenu popup) {
 		component.addMouseListener(new MouseAdapter() {
 			public void mousePressed(MouseEvent e) {
 				if (e.isPopupTrigger()) {
@@ -576,6 +820,8 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 			 * @param e
 			 */
 			private void showMenu(MouseEvent e) {
+				if(!menu_abilitated)
+					return;
 				/**
 				 * Per verificare se il clic è fuori dall'area diagram e
 				 * nell'are label utilizzo le coordinate del pannello Poichè le
@@ -583,10 +829,11 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 				 * destra devo per le coordinate inferiori riporatre la
 				 * coordinata Y del click in basso(...)
 				 */
-				if ((rect_panel.height - e.getY()) < margin_bottom
-						|| e.getX() < margin_left)
-					popupMenuLabel.show(e.getComponent(), e.getX(), e.getY());
-				else
+				if ((rect_panel.height - e.getY()) <margin_bottom)
+					popupX.show(e.getComponent(), e.getX(), e.getY());
+				else if(e.getX() < margin_left)
+					popupY.show(e.getComponent(), e.getX(), e.getY());
+				else 
 					popupMenu.show(e.getComponent(), e.getX(), e.getY());
 				// System.out.println("e.gety="+e.getY()+"  e.getX= "+e.getX()+" marginleft  ="+margin_left+"   marginnottom ="+margin_bottom);
 			}
@@ -599,7 +846,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	 */
 	public void itemStateChanged(ItemEvent e) {
 		// Checkbox adatta scalaa Frame
-		if (e.getItem().equals(chckbxmnAdattascala)) {
+	if (e.getItem().equals(chckbxmnAdattascala)) {
 			if (e.getStateChange() == 1) {
 				mntmScala_x_2.setEnabled(false);
 				mntmScala_div_2.setEnabled(false);
@@ -608,7 +855,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 				mntmAsseY2x.setEnabled(false);
 				mntmAsseX2x.setEnabled(false);
 
-				adapt_scale = APanelDiagram.ADAPTXYSCALE;
+				adapt_scale =ADAPTXYSCALE;
 				repaint();
 				validate();
 				// Mi posiziona la finestra scollable con l'origine visibile
@@ -625,7 +872,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 				mntmAsseY2x.setEnabled(true);
 				mntmAsseX2x.setEnabled(true);
 
-				adapt_scale = APanelDiagram.ADAPTSCALEBLOCKED;
+				adapt_scale = ADAPTSCALEBLOCKED;
 				repaint();
 				validate();
 				// Mi posiziona la finestra scollable con l'origine visibile
@@ -634,12 +881,39 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 							rect_view.height - margin_bottom));
 				}
 			}
+		}else if(e.getItem().equals(chckbxmntmGrigliaOrizz)){
+			if(e.getStateChange()==ItemEvent.SELECTED)
+				this.showGridHorizontal=true;
+			else
+				this.showGridHorizontal=false;
+			repaint();
+		}else if(e.getItem().equals(chckbxmntmGridVert)){
+			if(e.getStateChange()==ItemEvent.SELECTED)
+			showGridVertical=true;
+			else
+			showGridVertical=false;
+				repaint();	
 		}
 
 	}
-
 	/**
 	 * 
+	 */
+	public void abilitaMenu(){
+		menu_abilitated=true;
+		
+	}
+	/**
+	 * per consentire l'utilizzo senza menu
+	 */
+public void disabilitaMenu(){
+	menu_abilitated=false;
+		
+		
+	}
+
+	/**
+	 *   Intercetto gli evnti (non check box..) ACTION PERFORMED
 	 */
 	@Override
 	public void actionPerformed(ActionEvent arg0) {
@@ -666,33 +940,64 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		} else if (command.equals("Asse Y 2x")) {
 			y_scale *= 2;
 			this.repaint();
+		} else if (command.equals("exp10")) {
+			Geometry.Exp10(x_axis_str);
+			//this.mntmLog.setEnabled(true);
+			//this.mntm10E.setEnabled(false);
+			this.repaint();
+		} else if (command.equals("log10")) {
+			Geometry.LogTransformation(x_axis_str);
+			//this.mntmLog.setEnabled(false);
+			//this.mntm10E.setEnabled(true);
+			this.repaint();
+		} else if (command.equals("exp10Y")) {
+			Geometry.Exp10(y_axis_str);
+			this.repaint();
+		} else if (command.equals("log10Y")) {
+			Geometry.LogTransformation(y_axis_str);
+			this.repaint();
+		}else if (command.equals("resetY")) {
+			System.arraycopy(y_axis, 0, y_axis_str,0, y_axis.length);
+			this.repaint();
+		} else if (command.equals("resetX")) {
+			System.arraycopy(x_axis, 0, x_axis_str,0, x_axis.length);
+			this.repaint();
 		}
 
 	}
 
-	public boolean isLogaritmic_y() {
-		return logaritmic_y;
-	}
-
-	public void setLogaritmic_y(boolean logaritmic_y) {
-		this.logaritmic_y = logaritmic_y;
-	}
+	
 
 	public double[] getX_axis() {
 		return x_axis;
 	}
-
+/**
+ * Imposta i valori dell'asse x; intanto inizzializza il vettore per creare le stringhe
+ * che è separato per permettere operazioni sui dati senza modificarli
+ * @param x_axis
+ */
 	public void setX_axis(double[] x_axis) {
 		this.x_axis = x_axis;
+		x_axis_str =new double[x_axis.length];
+		System.arraycopy(x_axis, 0, x_axis_str,0, x_axis.length);
+		
+		
 		this.repaint();
 	}
 
 	public double[] getY_axis() {
 		return y_axis;
 	}
-
+/**
+ *  * Imposta i valori dell'asse Y; intanto inizzializza il vettore per creare le stringhe
+ * che è separato per permettere operazioni(per la visualizzazione) sui dati senza modificarli
+ * 
+ * @param y_axis
+ */
 	public void setY_axis(double[] y_axis) {
 		this.y_axis = y_axis;
+		y_axis_str =new double[y_axis.length];
+		System.arraycopy(y_axis, 0, y_axis_str,0, y_axis.length);
 		this.repaint();
 	}
 
@@ -722,21 +1027,8 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		this.margin = margin;
 	}
 
-	public boolean isLogaritmic_x() {
-		return logaritmic_x;
-	}
+	
 
-	public void setLogaritmic_x(boolean logaritmic_x) {
-		this.logaritmic_x = logaritmic_x;
-	}
-
-	public int getLabel_x() {
-		return label_x;
-	}
-
-	public void setLabel_x(int label_x) {
-		this.label_x = label_x;
-	}
 
 	public String getFormatNumberAxis() {
 		return formatNumberAxis;
@@ -750,6 +1042,18 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		this.adapt_scale = adapt_scale;
 	}
 
+	/**
+	 * 
+	 * @param functions
+	 */
+	public void setFunctions(double[] functions) {
+		this.functions = functions;
+	}
+
+/**
+ * Imposta il  formato di visualizzazione delle etichette degli assi
+ * @param formatNumberAxis
+ */
 	public void setFormatNumberAxis(String formatNumberAxis) {
 		String oldf = this.formatNumberAxis;
 		try {
@@ -761,5 +1065,59 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		}
 
 	}
+	/**
+	 * Classe per disegnare una coordinata con segmenti sugli assi ortogonali
+	 * usare 
+	 * addPunto(x,y)
+	 * addPunto(new Punto(...))
+	 * clearPunti();
+	 * @author Anto
+	 *
+	 */
+	public class Punto{
+		public double x;
+		public double y;
+		public Color color;
+		public Stroke stroke;
+		
+		public Punto(double x, double y, Color color, Stroke stroke) {
+			super();
+			this.x = x;
+			this.y = y;
+			this.color = color;
+			this.stroke = stroke;
+		}
 
+		public Punto(double x, double y, Color color) {
+			super();
+			this.x = x;
+			this.y = y;
+			this.color = color;
+		}
+
+		public  Punto(){
+		color=Color.green;
+		 stroke = new BasicStroke(0.5f);
+		 stroke=new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{9}, 0);
+		
+		};
+		
+		
+	}
+	/**
+	 * Stringa di testo, da aggiungere alla lista di stringhe da visulizzare
+	 * 	contiene il testo e le coordinate
+	 * per eliminarle tutte chiamare clearStringhe()
+	 * Usare addStringa(Tring,x,y)
+	 * clearStringhe();
+	 * @author Anto
+	 *
+	 */
+	public class Stringa{
+		String testo;
+		public double x;
+		public double y;
+		
+	}
+	
 }
