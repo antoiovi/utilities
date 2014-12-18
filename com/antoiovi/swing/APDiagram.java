@@ -2,7 +2,6 @@ package com.antoiovi.swing;
 
 import com.antoiovi.swing.APanelDiagram.Punto;
 
-
 public interface APDiagram {
 	/**
 	 * Imposta i valori dell'asse x; intanto inizzializza il vettore per creare
@@ -75,6 +74,8 @@ public interface APDiagram {
 	 * contiene il testo e le coordinate per eliminarle tutte chiamare
 	 * clearStringhe() Usare addStringa(Tring,x,y) clearStringhe();
 	 * 
+	 * 18/12/2014 Aggiunto formaatAxisY e formatAxisX
+	 * 			usando setFormatAxis(str) li imposta tutte e due uguali
 	 * @author Anto
 	 * 
 	 */
@@ -122,5 +123,13 @@ public interface APDiagram {
 	public void setFormatNumberAxis(String formatNumberAxis);
 
 	public String getFormatNumberAxis();
+
+	public String getFormatNumberAxisX();
+
+	public void setFormatNumberAxisX(String formatNumberAxisX);
+
+	public String getFormatNumberAxisY();
+
+	public void setFormatNumberAxiY(String formatNumberAxiY);
 
 }

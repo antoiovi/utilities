@@ -71,7 +71,15 @@ import java.awt.event.ActionListener;
  */
 
 public class APanelDiagram extends JPanel implements ItemListener, ActionListener,APDiagram {
-
+	/**
+	 * Deve assumere uno dei valori ADAPT... 2/12/2014 attualmente usate solo
+	 * AADAPTXYSCALEBLOCKED e ADAPTXYSCALE
+	 */
+	private int adapt_scale;
+	public  final int ADAPTXSCALE = 1;
+	public  final int ADAPTYSCALE = 2;
+	public  final int ADAPTXYSCALE = 3;
+	public  final int ADAPTSCALEBLOCKED = 4;
 	// PROPIETA' AFFERENTI AI DATI
 	private double x_axis[];
 	private double y_axis[];
@@ -129,9 +137,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	
 	
 	
-	public  boolean isMenu_abilitated() {
-		return menu_abilitated;
-	}
+	
 	// = margin + size_label_y.height;
 	// PROPIETA' AFFERENTI LA SCALA
 	/**
@@ -156,15 +162,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	 * schermo, e di default vale Y_scale
 	 */
 	private double y_scale_adapted;
-	/**
-	 * Deve assumere uno dei valori ADAPT... 2/12/2014 attualmente usate solo
-	 * AADAPTXYSCALEBLOCKED e ADAPTXYSCALE
-	 */
-	private int adapt_scale;
-	public  final int ADAPTXSCALE = 1;
-	public  final int ADAPTYSCALE = 2;
-	public  final int ADAPTXYSCALE = 3;
-	public  final int ADAPTSCALEBLOCKED = 4;
+	
 
 	// PROPIETA' AFFERENTI LE ETICHETTE
 
@@ -265,6 +263,8 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	private boolean showGridVertical = true;
 
 	private String formatNumberAxis = "%2.2f";
+	private String formatNumberAxisX = "%2.2f";
+	private String formatNumberAxisY = "%2.2f";
 	
 	private  Rectangle rect_view;
 	private  Rectangle rect_panel;
@@ -292,7 +292,10 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 	private JMenuItem mntmResety;
 	private JMenuItem mntmResetx;
 	private   boolean menu_abilitated=true;
-
+	public  boolean isMenu_abilitated() {
+		return menu_abilitated;
+		}
+	
 	/************************************************
 	 * Create the panel.	COSTRUTTORE				*
 	 ************************************************/
@@ -658,7 +661,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 			//double resto=x_axis[x]%10;
 			//if(resto==0){
 			Rectangle r = (Rectangle) rect_x_label.get(x);
-			String str = String.format(formatNumberAxis, x_axis_str[x]);
+			String str = String.format(formatNumberAxisX, x_axis_str[x]);
 			// g.drawString(str, r.x, r.y);
 			if (r_prev != null) {
 				if (r.intersects(r_prev))
@@ -773,7 +776,7 @@ public class APanelDiagram extends JPanel implements ItemListener, ActionListene
 		Rectangle r_prev = null;
 		for (int x = 0; x < rect_y_label.size(); x++) {
 			Rectangle r = (Rectangle) rect_y_label.get(x);
-			String str = String.format(formatNumberAxis, y_axis_str[x]);
+			String str = String.format(formatNumberAxisY, y_axis_str[x]);
 			// g.drawString(str, r.x, r.y);
 			if (r_prev != null) {
 				if (r.intersects(r_prev))
@@ -1027,9 +1030,54 @@ public void disabilitaMenu(){
 		this.margin = margin;
 	}
 
+	/**
+	 * Imposta il  formato di visualizzazione delle etichette degli assi
+	 * @param formatNumberAxis
+	 */
+		public void setFormatNumberAxis(String formatNumberAxis) {
+			String oldf = this.formatNumberAxis;
+			try {
+				String.format(formatNumberAxis, 0.15);// Verifica se nuovo formato è
+														// corretto
+				this.formatNumberAxis = formatNumberAxis;
+				this.formatNumberAxisX = formatNumberAxis;
+				this.formatNumberAxisY = formatNumberAxis;
+			} catch (Exception e) {
+				this.formatNumberAxis = oldf;
+			}
+
+		}
 	
-
-
+	public void setFormatNumberAxisX(String formatNumberAxisX) {
+		String oldf = this.formatNumberAxisX;
+		try {
+			String.format(formatNumberAxisX, 0.15);// Verifica se nuovo formato è
+										// corretto
+			this.formatNumberAxisX = formatNumberAxisX;
+		} catch (Exception e) {
+			this.formatNumberAxisX = oldf;
+		}
+			
+	}
+	
+	public void setFormatNumberAxiY(String formatNumberAxiY) {
+		String oldf = this.formatNumberAxisY;
+		try {
+			String.format(formatNumberAxiY, 0.15);// Verifica se nuovo formato è
+										// corretto
+			this.formatNumberAxisY = formatNumberAxiY;
+		} catch (Exception e) {
+			this.formatNumberAxisY = oldf;
+		}
+	}
+	
+	
+	public String getFormatNumberAxisY() {
+		return formatNumberAxisY;
+	}
+	public String getFormatNumberAxisX() {
+		return formatNumberAxisX;
+	}
 	public String getFormatNumberAxis() {
 		return formatNumberAxis;
 	}
@@ -1050,21 +1098,7 @@ public void disabilitaMenu(){
 		this.functions = functions;
 	}
 
-/**
- * Imposta il  formato di visualizzazione delle etichette degli assi
- * @param formatNumberAxis
- */
-	public void setFormatNumberAxis(String formatNumberAxis) {
-		String oldf = this.formatNumberAxis;
-		try {
-			String.format(formatNumberAxis, 0.15);// Verifica se nuovo formato è
-													// corretto
-			this.formatNumberAxis = formatNumberAxis;
-		} catch (Exception e) {
-			this.formatNumberAxis = oldf;
-		}
 
-	}
 	/**
 	 * Classe per disegnare una coordinata con segmenti sugli assi ortogonali
 	 * usare 
