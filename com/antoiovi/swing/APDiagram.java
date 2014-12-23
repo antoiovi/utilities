@@ -7,7 +7,9 @@ public interface APDiagram {
 	 * Imposta i valori dell'asse x; intanto inizzializza il vettore per creare
 	 * le stringhe che è separato per permettere operazioni sui dati senza
 	 * modificarli
-	 * 
+	 *  20/12/2014: aggiunto setFormatNumberAxisX(..
+ *          aggiunto setFormatNumberAxisY(..
+ *         per differnziare il formato valori asse x  e asse y
 	 * @param x_axis
 	 */
 	public void setX_axis(double[] x_axis);

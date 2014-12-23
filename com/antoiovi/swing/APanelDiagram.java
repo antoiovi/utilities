@@ -67,7 +67,9 @@ import java.awt.event.ActionListener;
  *         
  *         addStringa(String,x,y) Stmpa una stringa nella posizione xy
  *         clearStringhe(); pulisce le stringhe
- *         
+ *         20/12/2014: aggiunto setFormatNumberAxisX(..
+ *          aggiunto setFormatNumberAxisY(..
+ *         per differnziare il formato valori asse x  e asse y
  */
 
 public class APanelDiagram extends JPanel implements ItemListener, ActionListener,APDiagram {
