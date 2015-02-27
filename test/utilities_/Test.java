@@ -8,9 +8,9 @@ public class Test {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-Calendario c=new Calendario();
+AiCalendario c=new AiCalendario();
 Date oggi=new Date();
-Giorno[] sett=c.createAWeek(oggi);
+AiDate[] sett=c.createAWeek(oggi);
 for(int x=0;x<sett.length;x++){
 	
 	System.out.println(x+")"+sett[x].getStr_day_name()+sett[x].getDateAsString() );
