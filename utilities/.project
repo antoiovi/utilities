@@ -9,4 +9,4 @@
     <natures>
     	<nature>org.eclipse.jdt.core.javanature</nature>
     </natures>
-</projectDescription>
+    <name>utilities</name></projectDescription>
