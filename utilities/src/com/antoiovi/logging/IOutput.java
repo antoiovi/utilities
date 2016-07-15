@@ -15,8 +15,8 @@ public interface IOutput {
 	public void logTrace(Object msg) ;
 	
 	public void clear();
-	public void setMessage();
-	public void appendMessage();
+	public void setMessage(Object msg);
+	public void appendMessage(Object msg);
 	
 	public enum Level{
 		     NOOUT ,  ERROR ,WARNING,INFO,DEBUG,TRACE

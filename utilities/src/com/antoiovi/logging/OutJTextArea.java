@@ -1,6 +1,10 @@
 package com.antoiovi.logging;
 
-public class OutputStandard implements IOutput {
+import javax.swing.JTextArea;
+
+import com.antoiovi.logging.IOutput.Level;
+
+public class OutJTextArea extends JTextArea implements IOutput {
 
 	private boolean error;
 	private boolean warning;
@@ -65,7 +69,8 @@ public class OutputStandard implements IOutput {
 	public void logError(Object msg) {
 		if(error)
 		{
-			System.out.println(msg);
+			this.append(msg.toString());
+			 
 		}
 	}
 
@@ -73,7 +78,7 @@ public class OutputStandard implements IOutput {
 	public void logWarning(Object msg) {
 		if(warning)
 		{
-			System.out.println(msg);
+			this.append(msg.toString());
 		}
 	}
 
@@ -81,7 +86,7 @@ public class OutputStandard implements IOutput {
 	public void logInfo(Object msg) {
 		if(info)
 		{
-			System.out.println(msg);
+			this.append(msg.toString());
 		}
 	}
 
@@ -89,7 +94,7 @@ public class OutputStandard implements IOutput {
 	public void logDebug(Object msg) {
 		if(debug)
 		{
-			System.out.println(msg);
+			this.append(msg.toString());
 		}
 	}
 
@@ -97,22 +102,23 @@ public class OutputStandard implements IOutput {
 	public void logTrace(Object msg) {
 		if(trace)
 		{
-			System.out.println(msg);
+			this.append(msg.toString());
 		}
 	}
 
 	@Override
 	public void clear() {
- 
+ this.setText("");
 	}
 
 	@Override
 	public void setMessage(Object msg) {
- 
+		this.setText(msg.toString());
 	}
 
 	@Override
 	public void appendMessage(Object msg) {
+		this.append(msg.toString());
  
 	}
 
@@ -156,6 +162,4 @@ public class OutputStandard implements IOutput {
 		this.trace = trace;
 	}
 
-	
-	
 }
