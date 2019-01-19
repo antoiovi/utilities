@@ -8,6 +8,7 @@ import java.util.zip.ZipInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import org.apache.commons.lang3.StringUtils ;
 
 public class App {
 	String nomeclasse;
@@ -40,9 +41,9 @@ public class App {
 			if (ext.equals("jar"))
 				app.loadjar();
 			else if (ext.equals("war"))
-				app.pathInwar();
+				app.analizeWar();
 			else
-				exit();
+				exit("Il primo parametro deve essere un file jar o war ");
 
 		} else if (args.length == 2) {
 			app.setNomejar(args[0]);
@@ -62,7 +63,7 @@ public class App {
 
 			}
 			else {
-				exit();
+				exit("Il primo parametro deve essere un file jar o war");
 			}
 			
 		} else {
@@ -77,12 +78,15 @@ public class App {
 		System.exit(0);
 	}
 
+	static private void exit(String msg) {
+		System.out.println(msg);
+		System.exit(0);
+	}
+
 	private void pathInwar() {
-		URL urlToWar;
 		String dir = System.getProperty("user.dir");
 		String path = "jar:file://" + dir + "/" + nomejar + "!/WEB-INF/classes/";
 		System.out.println("PATH completo = " + path);
-		InputStream instr;
 		try {
 			final URL jarUrl = new URL(path);
 			urlclsloaderChild = new URLClassLoader(new URL[] { new URL(path) }, App.class.getClassLoader());
@@ -97,7 +101,20 @@ public class App {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
+		
+	}// pathInWar
+	/**
+	 * 
+	 */
+	private void analizeWar() {
 		try {
+			InputStream instr;
+
+			String dir = System.getProperty("user.dir");
+			System.out.println("Analizza il war ");
+			URL urlToWar;
+			String path = "file://" + dir + "/" + nomejar;
+
 			urlToWar = new URL(path);
 			instr = urlToWar.openStream();
 			ZipInputStream zipinstr = new ZipInputStream(instr);
@@ -125,10 +142,23 @@ public class App {
 
 				} // ze.isDirectory
 				else {
+					String prefix="WEB-INF/";
 					String name = ze.getName();
-					System.out.println(name);
-					// System.out.println("/WEB-INF/classes/ Non Ptresente...");
-				}
+					//System.out.println(name);
+					//System.out.println(name);
+
+					if(StringUtils.startsWith(name, prefix)) {
+						name=name.substring(prefix.length());
+					//	System.out.println("\t"+name);
+
+						prefix="classes";
+						if(StringUtils.startsWith(name, prefix)) {
+
+							name=name.substring(prefix.length()+1);
+						System.out.println(name.replaceAll("/", "."));
+						}
+					}
+ 				}
 				ze = zipinstr.getNextEntry();
 			}
 
@@ -148,9 +178,14 @@ public class App {
 			e.printStackTrace();
 			System.exit(0);
 		}
-
-	}// pathInWar
-
+	
+		
+		
+		
+	}
+/**
+ * 
+ */
 	private void loadjar() {
 		String dir = System.getProperty("user.dir");
 		String path = "file://" + dir + "/" + nomejar;
@@ -162,11 +197,14 @@ public class App {
 			else
 				System.out.println("Child=null....: ");
 		} catch (Exception e) {
-			System.out.println("Errore creazoine class loader ");
+			exit("Errore creazine class loader ");
 
 		}
 	}
-
+	
+/**
+ * 
+ */
 	private void loadclass() {
 		try {
 			System.out.println("Classload....");
@@ -179,12 +217,16 @@ public class App {
 				System.out.println(f.getType().toString());
 			}
 		} catch (Exception e) {
-			System.out.println("Errore getClass name ");
 			System.out.println(e.getMessage());
 			e.printStackTrace();
+			exit("Errore getClass name ");
+
 		}
 	}
 
+	
+	
+	
 	public void setNomeclasse(String nomeclasse) {
 		this.nomeclasse = nomeclasse;
 	}
