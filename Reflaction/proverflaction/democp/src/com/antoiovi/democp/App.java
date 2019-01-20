@@ -19,7 +19,7 @@ public class App {
 	String nomejar = null;
 	URLClassLoader urlclsloaderChild = null;;
 	List<String> foundedClasses;
-	Class selectedClass = null;
+	protected Class selectedClass = null;
 	String extension = "";
 
 	public static void main(String[] args) {
@@ -32,11 +32,10 @@ public class App {
 		if (args.length > 0) {
 			if (args[0].length() > 3) {
 				ext = args[0].substring(args[0].length() - 3);
-				logDebug("Estensione :  " + ext);
+				logDebug("Extension :  " + ext);
 				if (!ext.equals("jar") && !ext.equals("war")) {
 					exit();
 				}
-				
 				app.setExtension(ext.toLowerCase());
 			}
 
@@ -46,19 +45,19 @@ public class App {
 
 		if (args.length == 1) {
 			app.setNomejar(args[0]);
-			System.out.println("File jar= Arg[0]=" + args[0]);
+			logDebug("File jar= Arg[0]=" + args[0]);
 			if (ext.equals("jar"))
 				app.analizeJar();
 			else if (ext.equals("war"))
 				app.analizeWar();
 			else
-				exit("Il primo parametro deve essere un file jar o war ");
+				exit("First parameter must have  jar or war extension!");
 
 		} else if (args.length == 2) {
 			app.setNomejar(args[0]);
-			System.out.println("File jar= Arg[0]=" + args[0]);
+			logDebug("File jar= Arg[0]=" + args[0]);
 			app.setNomeclasse((args[1]));
-			System.out.println("Nome classe = Arg[1]=" + args[1]);
+			logDebug("Nome classe = Arg[1]=" + args[1]);
 
 			if (ext.equals("jar")) {
 				app.loadjar();
@@ -71,7 +70,7 @@ public class App {
 				app.executeTaskOnSelectedClass();
 
 			} else {
-				exit("Il primo parametro deve essere un file jar o war");
+				exit("First parameter must have  jar or war extension!");
 			}
 
 		} else {
@@ -81,8 +80,6 @@ public class App {
 	}
 
 	static private void exit() {
-		System.out.println("Mancano parametri ; usare democp  file.jar nomeclasse");
-		System.out.println("\t nomeclasse è facoltativo");
 		System.exit(0);
 	}
 
@@ -115,8 +112,8 @@ public class App {
 	}// pathInWar
 
 	/**
-	 * Chiamat solo quando il primo parametro 'e un file JAR, ed il secondo
-	 * parametro(nomeclasse) NON 'e presente
+	 * Called when the first parameter is a file JAR,
+	 * and second parameter is not present
 	 */
 	private void analizeJar() {
 		foundedClasses = new ArrayList<String>();
@@ -170,11 +167,11 @@ public class App {
 			System.exit(0);
 		}
 
-	}
+	}//analizeJar
 
 	/**
-	 * Chiamat solo quando il primo parametro 'e un file WAR, ed il secondo
-	 * parametro(nomeclasse) NON 'e presente
+	 * Called when the first parameter of the command line is a WAR file
+	 * and second parameter is not present (classname)
 	 */
 	private void analizeWar() {
 		foundedClasses = new ArrayList<String>();
@@ -183,7 +180,7 @@ public class App {
 			String prefix = "WEB-INF/classes/";
 
 			String dir = System.getProperty("user.dir");
-			System.out.println("Analizza il war ");
+			logDebug("Analizza il war ");
 			URL urlToWar;
 			String path = "file://" + dir + "/" + nomejar;
 
@@ -212,10 +209,10 @@ public class App {
 			if (foundedClasses.size() > 0)
 				this.selectClass(foundedClasses);
 			else
-				exit("Nesssuna classe presente nella directory " + prefix + " del file " + this.nomejar);
+				exit("No class is present in the directory  " + prefix + " of file " + this.nomejar);
 
 		} catch (MalformedURLException e) {
-			System.out.println("MalformedURLException :Errore creazoine class loader ");
+			System.out.println("MalformedURLException :Errore creazione class loader ");
 			System.out.println("Errore creazoine class loader ");
 			System.exit(0);
 		} catch (IOException e) {
@@ -231,13 +228,14 @@ public class App {
 	}
 
 	/**
-	 * Carica il file jar presente in nomejar, e crea il urlclsloaderChild Esce
-	 * dalprogramma se non riece a crearlo.
+	 * Load the JAR file registerd in field nomejar and
+	 * it creates the parameter URLclassloader urlclsloaderChild
+	* If problems exit program
 	 */
 	private void loadjar() {
 		String dir = System.getProperty("user.dir");
 		String path = "file://" + dir + "/" + nomejar;
-		System.out.println("PATH completo = " + path);
+		logDebug("Full PATH  = " + path);
 		try {
 			urlclsloaderChild = new URLClassLoader(new URL[] { new URL(path) }, App.class.getClassLoader());
 			if (urlclsloaderChild != null)
@@ -319,10 +317,9 @@ public class App {
 	}
 
 	/**
-	 * Metodo di cui si puo fare l' override per eeseguire le operazioni sulla
-	 * classe selezionata
+	 * This method can be overridden an one can manipulate the field selectedClass;
 	 */
-	public void executeTaskOnSelectedClass() {
+	protected void executeTaskOnSelectedClass() {
 		log("Operazioni da eseguire su classe ");
 		Field field[] = selectedClass.getDeclaredFields();
 		Method[] methods = selectedClass.getDeclaredMethods();
@@ -344,7 +341,7 @@ public class App {
 			if (t.length > 0) {
 				log("\t\tParamters types");
 				for (int x = 0; x < t.length; x++) {
-					log(String.format("\t\t\t Parametre[%d] Type %s", (x + 1), t[x].getTypeName()));
+					log(String.format("\t\t\t Parameter[%d] Type %s", (x + 1), t[x].getTypeName()));
 				}
 			} else {
 				log("\t\t\t No parameters");
@@ -353,11 +350,11 @@ public class App {
 		}
 	}
 
-	private static void log(String s) {
+	protected static void log(String s) {
 		System.out.println(s);
 	}
 
-	private static void logDebug(String s) {
+	protected static void logDebug(String s) {
 		System.out.println(s);
 	}
 
