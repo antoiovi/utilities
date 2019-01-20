@@ -3,32 +3,41 @@ package com.antoiovi.democp;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
-import org.apache.commons.lang3.StringUtils ;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 public class App {
-	String nomeclasse;
-	String nomejar;
+	String nomeclasse = null;
+	String nomejar = null;
 	URLClassLoader urlclsloaderChild = null;;
+	List<String> foundedClasses;
+	Class selectedClass = null;
+	String extension = "";
 
 	public static void main(String[] args) {
 		String ext = "";
 		App app = new App();
 		final String dir = System.getProperty("user.dir");
 		System.out.println("user.dir = " + dir);
+		// Controllo validita estensione primo argomento :
+		// file.jar oppure file.war
 		if (args.length > 0) {
 			if (args[0].length() > 3) {
 				ext = args[0].substring(args[0].length() - 3);
-				System.out.println("Estensione :  " + ext);
-
+				logDebug("Estensione :  " + ext);
 				if (!ext.equals("jar") && !ext.equals("war")) {
-
 					exit();
 				}
+				
+				app.setExtension(ext.toLowerCase());
 			}
 
 		} else {
@@ -39,7 +48,7 @@ public class App {
 			app.setNomejar(args[0]);
 			System.out.println("File jar= Arg[0]=" + args[0]);
 			if (ext.equals("jar"))
-				app.loadjar();
+				app.analizeJar();
 			else if (ext.equals("war"))
 				app.analizeWar();
 			else
@@ -50,22 +59,21 @@ public class App {
 			System.out.println("File jar= Arg[0]=" + args[0]);
 			app.setNomeclasse((args[1]));
 			System.out.println("Nome classe = Arg[1]=" + args[1]);
-			
-			
+
 			if (ext.equals("jar")) {
 				app.loadjar();
 				app.loadclass();
+				app.executeTaskOnSelectedClass();
 
-			}
-			else if (ext.equals("war")) {
+			} else if (ext.equals("war")) {
 				app.pathInwar();
 				app.loadclass();
+				app.executeTaskOnSelectedClass();
 
-			}
-			else {
+			} else {
 				exit("Il primo parametro deve essere un file jar o war");
 			}
-			
+
 		} else {
 			exit();
 		}
@@ -83,88 +91,71 @@ public class App {
 		System.exit(0);
 	}
 
+	/**
+	 * Create URLClassLoader urlclsloaderChild refered to directory
+	 * /WEB-INF/classes/ of the war file (field nomejar)
+	 */
 	private void pathInwar() {
 		String dir = System.getProperty("user.dir");
 		String path = "jar:file://" + dir + "/" + nomejar + "!/WEB-INF/classes/";
-		System.out.println("PATH completo = " + path);
+		logDebug("Full PATH   = " + path);
 		try {
 			final URL jarUrl = new URL(path);
 			urlclsloaderChild = new URLClassLoader(new URL[] { new URL(path) }, App.class.getClassLoader());
 			if (urlclsloaderChild != null) {
-				System.out.println("pathInwar---- Child creato regolarmente.. " + urlclsloaderChild.toString());
-				/*this.nomeclasse = "com.antoiovi.primef.model.Person";
-				this.loadclass();*/
+				log("pathInwar---- Child created.. " + urlclsloaderChild.toString());
 			} else {
-				System.out.println("pathInwar---- Child=null....: ");
+				log("pathInwar---- Child=null....: ");
 			}
 		} catch (MalformedURLException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+ 			e1.printStackTrace();
+			exit("MakformedUrlExcetin, Verify the path of the jar(war) file..");
 		}
-		
+
 	}// pathInWar
+
 	/**
-	 * 
+	 * Chiamat solo quando il primo parametro 'e un file JAR, ed il secondo
+	 * parametro(nomeclasse) NON 'e presente
 	 */
-	private void analizeWar() {
+	private void analizeJar() {
+		foundedClasses = new ArrayList<String>();
 		try {
 			InputStream instr;
-
 			String dir = System.getProperty("user.dir");
-			System.out.println("Analizza il war ");
-			URL urlToWar;
+			System.out.println("Analizza il JAR ");
+			URL urlToJar;
 			String path = "file://" + dir + "/" + nomejar;
 
-			urlToWar = new URL(path);
-			instr = urlToWar.openStream();
+			urlToJar = new URL(path);
+			instr = urlToJar.openStream();
 			ZipInputStream zipinstr = new ZipInputStream(instr);
 			ZipEntry ze = zipinstr.getNextEntry();
 			while (ze != null) {
-				if (ze.isDirectory()) {
-					String namedir = ze.getName();
+				if (!ze.isDirectory()) {
 
-					if (namedir.equals("WEB-INF/classes/")) {
-						System.out.println("++++MATCH++++++++  " + ze.getName());
-						// URL classURL = ze.getClass().getClassLoader().getResource(namedir);
-						// urlclsloaderChild = new URLClassLoader(new URL[] { classURL },
-						// App.class.getClassLoader());
-
-						/*
-						 * if (classURL != null) { urlclsloaderChild = new URLClassLoader(new URL[] {
-						 * classURL }, App.class.getClassLoader()); try { if (urlclsloaderChild != null)
-						 * System.out.println( "pathInWar : Child creato regolarmente.. " +
-						 * urlclsloaderChild.toString()); else
-						 * System.out.println("pathInWar  Child=null....: "); } catch (Exception e) {
-						 * System.out.println("pathInWar   :Errore creazoine class loader "); } if
-						 * (nomeclasse != null) this.loadclass();
-						 */
-					} // namedir.equals("WEB-INF/classes/")
-
-				} // ze.isDirectory
-				else {
-					String prefix="WEB-INF/";
 					String name = ze.getName();
-					//System.out.println(name);
-					//System.out.println(name);
 
-					if(StringUtils.startsWith(name, prefix)) {
-						name=name.substring(prefix.length());
-					//	System.out.println("\t"+name);
+					if (name.endsWith(".class")) {
+						log(name);
+						name = name.substring(0, name.indexOf(".class"));
+						log(name);
 
-						prefix="classes";
-						if(StringUtils.startsWith(name, prefix)) {
+						name = name.replaceAll("/", ".");
+						log(name);
 
-							name=name.substring(prefix.length()+1);
-						System.out.println(name.replaceAll("/", "."));
-						}
+						foundedClasses.add(name);
 					}
- 				}
+
+				}
 				ze = zipinstr.getNextEntry();
 			}
 
-			/*
-			 * /WEB-INF/classes/ com.antoiovi.primef.model.Person
-			 */
+			if (foundedClasses.size() > 0)
+				this.selectClass(foundedClasses);
+			else
+				exit("Nesssuna classe presente nl file JAR" + this.nomejar);
+
 		} catch (MalformedURLException e) {
 			System.out.println("MalformedURLException :Errore creazoine class loader ");
 			System.out.println("Errore creazoine class loader ");
@@ -178,14 +169,71 @@ public class App {
 			e.printStackTrace();
 			System.exit(0);
 		}
-	
-		
-		
-		
+
 	}
-/**
- * 
- */
+
+	/**
+	 * Chiamat solo quando il primo parametro 'e un file WAR, ed il secondo
+	 * parametro(nomeclasse) NON 'e presente
+	 */
+	private void analizeWar() {
+		foundedClasses = new ArrayList<String>();
+		try {
+			InputStream instr;
+			String prefix = "WEB-INF/classes/";
+
+			String dir = System.getProperty("user.dir");
+			System.out.println("Analizza il war ");
+			URL urlToWar;
+			String path = "file://" + dir + "/" + nomejar;
+
+			urlToWar = new URL(path);
+			instr = urlToWar.openStream();
+			ZipInputStream zipinstr = new ZipInputStream(instr);
+			ZipEntry ze = zipinstr.getNextEntry();
+			while (ze != null) {
+				if (!ze.isDirectory()) {
+
+					String name = ze.getName();
+
+					if (name.startsWith(prefix)) {
+
+						if (name.endsWith(".class")) {
+							name = name.substring(prefix.length());
+							name = name.substring(0, name.indexOf(".class"));
+							name = name.replaceAll("/", ".");
+							foundedClasses.add(name);
+						}
+					}
+				}
+				ze = zipinstr.getNextEntry();
+			}
+
+			if (foundedClasses.size() > 0)
+				this.selectClass(foundedClasses);
+			else
+				exit("Nesssuna classe presente nella directory " + prefix + " del file " + this.nomejar);
+
+		} catch (MalformedURLException e) {
+			System.out.println("MalformedURLException :Errore creazoine class loader ");
+			System.out.println("Errore creazoine class loader ");
+			System.exit(0);
+		} catch (IOException e) {
+			System.out.println("IOExcepion Errore creazoine class loader ");
+			e.printStackTrace();
+			System.exit(0);
+		} catch (Exception e) {
+			System.out.println("Errore creazoine class loader ");
+			e.printStackTrace();
+			System.exit(0);
+		}
+
+	}
+
+	/**
+	 * Carica il file jar presente in nomejar, e crea il urlclsloaderChild Esce
+	 * dalprogramma se non riece a crearlo.
+	 */
 	private void loadjar() {
 		String dir = System.getProperty("user.dir");
 		String path = "file://" + dir + "/" + nomejar;
@@ -201,38 +249,128 @@ public class App {
 
 		}
 	}
-	
-/**
- * 
- */
-	private void loadclass() {
-		try {
-			System.out.println("Classload....");
-			Class classToLoad = Class.forName(nomeclasse, true, urlclsloaderChild);
-			Field field[] = classToLoad.getDeclaredFields();
 
-			for (int x = 0; x < field.length; x++) {
-				Field f = field[x];
-				System.out.println(f.getName());
-				System.out.println(f.getType().toString());
-			}
+	/**
+	 * Load the class (nomeclasse) and put its value into field setectedClass
+	 * 
+	 */
+	private void loadclass() {
+
+		try {
+			Class classToLoad = Class.forName(nomeclasse, true, urlclsloaderChild);
+			this.selectedClass = classToLoad;
+
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
-			exit("Errore getClass name ");
+			exit("Error getting  getClass name ");
 
 		}
 	}
 
-	
-	
-	
+	/**
+	 * Propone la lista di classi trovate nel file analizzto e chiede di sceglierne
+	 * uno
+	 * 
+	 * @param classeNames
+	 */
+	private void selectClass(List<String> classeNames) {
+		// int QUIT=classeNames.size()+1;
+		int QUIT = 0;
+		boolean test = true;
+		int input = 0;
+		do {
+			for (int x = 0; x < classeNames.size(); x++) {
+				log(String.format("%3d) %s", x + 1, classeNames.get(x)));
+			}
+			log(String.format("%3d) %s", QUIT, "Exit"));
+
+			try {
+				Scanner sc = new Scanner(System.in);
+				input = sc.nextInt();
+				if (input < 0 || input > (classeNames.size() + 1)) {
+					log("Inout noit valid !!");
+					continue;
+				}
+			} catch (java.util.InputMismatchException e) {
+				log("Input not valid !! Type a number ");
+				continue;
+			}
+
+			if (input == QUIT)
+				break;
+
+			nomeclasse = classeNames.get(input - 1);
+			log("Selected class   : " + nomeclasse);
+			if (extension.equals("war")) {
+				// Create the URLClassLoader to file.war!WEB-INF/classes/
+				this.pathInwar();
+			} else {
+				this.loadjar();
+			}
+
+			// Load the class nomeclasse in the field Class selectedClass
+			this.loadclass();
+			if (this.selectedClass != null)
+				this.executeTaskOnSelectedClass();
+
+		} while (test);
+		exit("");
+	}
+
+	/**
+	 * Metodo di cui si puo fare l' override per eeseguire le operazioni sulla
+	 * classe selezionata
+	 */
+	public void executeTaskOnSelectedClass() {
+		log("Operazioni da eseguire su classe ");
+		Field field[] = selectedClass.getDeclaredFields();
+		Method[] methods = selectedClass.getDeclaredMethods();
+		log(String.format("Classe %s", selectedClass.getName()));
+		log("Fields :");
+		for (int x = 0; x < field.length; x++) {
+			Field f = field[x];
+			String s = String.format("\tField name : %s Type %s", f.getName(), f.getType().toString());
+			log(s);
+		}
+		log("Methods :");
+
+		for (int y = 0; y < methods.length; y++) {
+			Method m = methods[y];
+			String s = String.format("\tMethod name : %s Returned Type %s", m.getName(), m.getReturnType().toString());
+			log(s);
+			// Type t[] = m.getGenericParameterTypes();
+			Type t[] = m.getParameterTypes();
+			if (t.length > 0) {
+				log("\t\tParamters types");
+				for (int x = 0; x < t.length; x++) {
+					log(String.format("\t\t\t Parametre[%d] Type %s", (x + 1), t[x].getTypeName()));
+				}
+			} else {
+				log("\t\t\t No parameters");
+			}
+
+		}
+	}
+
+	private static void log(String s) {
+		System.out.println(s);
+	}
+
+	private static void logDebug(String s) {
+		System.out.println(s);
+	}
+
 	public void setNomeclasse(String nomeclasse) {
 		this.nomeclasse = nomeclasse;
 	}
 
 	public void setNomejar(String nomejar) {
 		this.nomejar = nomejar;
+	}
+
+	public void setExtension(String extension) {
+		this.extension = extension;
 	}
 
 }
