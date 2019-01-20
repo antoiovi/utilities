@@ -14,15 +14,15 @@
 
 	<target name="jar">
 		<mkdir dir="build/jar" />
-		<jar destfile="build/jar/democp.jar" basedir="build/classes">
+		<jar destfile="build/jar/analizec.jar" basedir="build/classes">
 			<manifest>
-				<attribute name="Main-Class" value="com.antoiovi.democp.App" />
+				<attribute name="Main-Class" value="com.antoiovi.analizec.App" />
 			</manifest>
 		</jar>
 	</target>
 
 	<target name="run">
-		<java jar="build/jar/democp.jar" fork="true" />
+		<java jar="build/jar/analizec.jar" fork="true" />
 	</target>
 
 </project>

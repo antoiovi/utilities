@@ -1,4 +1,4 @@
-package com.antoiovi.democp;
+package com.antoiovi.analizec;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,7 +40,7 @@ public class App {
 			}
 
 		} else {
-			exit();
+			exit("Use : \n java -jar analizec.jar file.jar[.war] [com.package.Classname]");
 		}
 
 		if (args.length == 1) {
@@ -74,7 +74,7 @@ public class App {
 			}
 
 		} else {
-			exit();
+			exit("use analizec file.jar[war] [class]");
 		}
 
 	}
@@ -134,14 +134,9 @@ public class App {
 					String name = ze.getName();
 
 					if (name.endsWith(".class")) {
-						log(name);
-						name = name.substring(0, name.indexOf(".class"));
-						log(name);
-
-						name = name.replaceAll("/", ".");
-						log(name);
-
-						foundedClasses.add(name);
+ 						name = name.substring(0, name.indexOf(".class"));
+ 						name = name.replaceAll("/", ".");
+ 						foundedClasses.add(name);
 					}
 
 				}
@@ -183,18 +178,14 @@ public class App {
 			logDebug("Analizza il war ");
 			URL urlToWar;
 			String path = "file://" + dir + "/" + nomejar;
-
 			urlToWar = new URL(path);
 			instr = urlToWar.openStream();
 			ZipInputStream zipinstr = new ZipInputStream(instr);
 			ZipEntry ze = zipinstr.getNextEntry();
 			while (ze != null) {
 				if (!ze.isDirectory()) {
-
 					String name = ze.getName();
-
 					if (name.startsWith(prefix)) {
-
 						if (name.endsWith(".class")) {
 							name = name.substring(prefix.length());
 							name = name.substring(0, name.indexOf(".class"));
@@ -205,7 +196,6 @@ public class App {
 				}
 				ze = zipinstr.getNextEntry();
 			}
-
 			if (foundedClasses.size() > 0)
 				this.selectClass(foundedClasses);
 			else
