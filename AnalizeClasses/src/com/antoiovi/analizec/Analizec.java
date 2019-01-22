@@ -312,8 +312,10 @@ public class Analizec {
 	 * This method can be overridden an one can manipulate the field selectedClass;
 	 */
 	protected void executeTaskOnSelectedClass() {
-		TaskOnClass task= new TaskOnClass(selectedClass);
+		CreatePrimefaces task=new CreatePrimefaces(selectedClass);
+		//TaskOnClass task= new TaskOnClass(selectedClass);
 		task.executeTaskOnSelectedClass();
+		task.createTable();
 	}
 
 	protected static void log(String s) {
