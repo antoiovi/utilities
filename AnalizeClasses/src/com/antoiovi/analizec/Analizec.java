@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
-public class App {
+public class Analizec {
 	String nomeclasse = null;
 	String nomejar = null;
 	URLClassLoader urlclsloaderChild = null;;
@@ -26,7 +26,7 @@ public class App {
  
 	public static void main(String[] args) {
 		String ext = "";
-		App app = new App();
+		Analizec app = new Analizec();
 		final String dir = System.getProperty("user.dir");
 		System.out.println("user.dir = " + dir);
 		// Controllo validita estensione primo argomento :
@@ -312,34 +312,8 @@ public class App {
 	 * This method can be overridden an one can manipulate the field selectedClass;
 	 */
 	protected void executeTaskOnSelectedClass() {
-		log("Operazioni da eseguire su classe ");
-		Field field[] = selectedClass.getDeclaredFields();
-		Method[] methods = selectedClass.getDeclaredMethods();
-		log(String.format("Classe %s", selectedClass.getName()));
-		log("Fields :");
-		for (int x = 0; x < field.length; x++) {
-			Field f = field[x];
-			String s = String.format("\tField name : %s Type %s", f.getName(), f.getType().toString());
-			log(s);
-		}
-		log("Methods :");
-
-		for (int y = 0; y < methods.length; y++) {
-			Method m = methods[y];
-			String s = String.format("\tMethod name : %s Returned Type %s", m.getName(), m.getReturnType().toString());
-			log(s);
-			// Type t[] = m.getGenericParameterTypes();
-			Type t[] = m.getParameterTypes();
-			if (t.length > 0) {
-				log("\t\tParamters types");
-				for (int x = 0; x < t.length; x++) {
-					log(String.format("\t\t\t Parameter[%d] Type %s", (x + 1), t[x].getTypeName()));
-				}
-			} else {
-				log("\t\t\t No parameters");
-			}
-
-		}
+		TaskOnClass task= new TaskOnClass(selectedClass);
+		task.executeTaskOnSelectedClass();
 	}
 
 	protected static void log(String s) {
