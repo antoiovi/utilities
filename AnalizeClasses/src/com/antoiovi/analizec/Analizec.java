@@ -314,8 +314,9 @@ public class Analizec {
 	protected void executeTaskOnSelectedClass() {
 		CreatePrimefaces task=new CreatePrimefaces(selectedClass);
 		//TaskOnClass task= new TaskOnClass(selectedClass);
-		task.executeTaskOnSelectedClass();
+		//task.executeTaskOnSelectedClass();
 		task.createTable();
+		task.createForm();
 	}
 
 	protected static void log(String s) {
