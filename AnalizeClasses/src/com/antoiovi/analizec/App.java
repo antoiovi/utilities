@@ -1,6 +1,5 @@
 package com.antoiovi.analizec;
 
-import com.antoiovi.analizec.TaskOnClass;
 
 import java.net.MalformedURLException;
 import java.net.URL;

@@ -11,36 +11,58 @@ import java.net.URLClassLoader;
 import java.util.List;
 import javax.validation.constraints.Size;
 
+import com.sun.corba.se.impl.protocol.FullServantCacheLocalCRDImpl;
+
 public class CreatePrimefaces {
 
 	private Class selectedClass;
+	String fullClassName;
+	
 	private String className;
 
 	Field field[];
-	String managedBeanClassName;
-	String managedBeanName;
+
+	// strListAll = allNomeclasse
 	String strListAll;
+
+	// var = nome classe con primo carattere MINUSCOLO
 	String var;
 
+	// managedBeanClassName : NomeclasseBean
+	String managedBeanClassName;
+	// managedBeanName : nomeclasseBean
+	String managedBeanName;
+	
+	String packageClass;
+
+	
+	String newentityName;
+	
 	public CreatePrimefaces(Class selectedClass) {
 		this.selectedClass = selectedClass;
 		field = selectedClass.getDeclaredFields();
-		String s = String.format("Name Class %s \n Canonicalname %s", selectedClass.getName(),
-				selectedClass.getCanonicalName());
-		log(s);
+		  fullClassName=selectedClass.getName();
 		String[] tokens = selectedClass.getName().split("\\.");
-
+		// Recupera nome classe
 		className = tokens[tokens.length - 1];
 		managedBeanClassName = className + "Bean";
+		
 		log(className);
 		char c[] = className.toCharArray();
 		c[0] = Character.toLowerCase(c[0]);
+		// var = nome classe con primo carattere MINUSCOLO
 		var = new String(c);
+		// managedBeanName : nomeclasseBean
 		managedBeanName = var + "Bean";
 		log(managedBeanName);
 		log(var);
 		strListAll = "all" + className;
 		log(strListAll);
+		packageClass = fullClassName.substring(0,fullClassName.indexOf(className));
+		log("++++++ packageNAME= "+packageClass);
+		
+		newentityName="new"+var;
+
 
 	}
 
@@ -118,7 +140,6 @@ public class CreatePrimefaces {
 
 			writer.close();
 		} catch (FileNotFoundException | UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -173,13 +194,94 @@ public class CreatePrimefaces {
 
 					writer.close();
 				} catch (FileNotFoundException | UnsupportedEncodingException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 		
 		
 	}
 
+	public void craeteManagedBean() {
+		
+		String entityDAO="";
+		String daoName=className+"Dao";
+		String daoField=var+"Dao";
+		char c[] = strListAll.toCharArray();
+		c[0] = Character.toUpperCase(c[0]);
+		String setgetMethod=new String(c);
+		String setAll="set"+setgetMethod;
+		String getAll="get"+setgetMethod;
+		String importDao  ="import "+packageClass+daoName +";\n" ; 
+		String importClass="import "+fullClassName+";\n";
+		
+		String newEntity="new"+var;
+	/*			
+		log(importDao);
+		log(importClass);
+		log(setAll);
+		log(getAll);
+		*/
+		String s1="\n" + 
+				"import javax.inject.Named;\n" + 
+				"import javax.enterprise.context.RequestScoped;\n" + 
+				importDao + 
+				importClass + 
+				"\n" + 
+				"import javax.inject.Inject;\n" + 
+				"import javax.annotation.PostConstruct;\n" + 
+				"\n" + 
+				"import java.util.ArrayList;\n" + 
+				"import java.util.List;\n" + 
+				"\n" + 
+				"@Named\n" + 
+				"@RequestScoped\n" + 
+				"public class "+managedBeanClassName+" {\n" + 
+				"\n" + 
+				"	@Inject\n" + 
+				"	private "+daoName+" "+daoField+";\n" + 
+				"\n" + 
+				"	private "+className+" "+newentityName+";\n" + 
+				"\n" 
+				+
+				"	public List<"+className+"> "+strListAll+";\n" + 
+				"\n" + 
+				"	@PostConstruct\n" + 
+				"	public void init() {\n" + 
+				"		"+strListAll+"=new ArrayList<"+className+">();\n" + 
+				"		\n" + 
+				"	}\n" + 
+				"	\n" + 
+				" \n" + 
+				"	public List<"+className+"> "+getAll+"() {\n" + 
+				"		return "+strListAll+";\n" + 
+				"	}\n" + 
+				"\n" + 
+				"	public void "+setAll+"(List<"+className+"> "+strListAll+") {\n" + 
+				"		this."+strListAll+" = "+strListAll+";\n" + 
+				"	}\n" + 
+				"\n" + 
+				
+ 
+				"	public "+className+" getNew"+var+"() {\n" + 
+				"		return "+newentityName+";\n" + 
+				"	}\n" + 
+				"\n" + 
+				"	public void "+"setNew"+var+"("+className+" "+newentityName+") {\n" + 
+				"		this."+newentityName+" ="+newentityName+";\n" + 
+				"	}\n" + 
+				"}";
+		
+		PrintWriter writer;
+		try {
+			writer = new PrintWriter("ManagedBean.java", "UTF-8");
+			writer.println(s1);
+			writer.close();
+		} catch (FileNotFoundException | UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 	int findFieldWidth(Field f) {
 		int val = 25;
 		Annotation a[] = f.getDeclaredAnnotations();
@@ -189,7 +291,7 @@ public class CreatePrimefaces {
 			return sizeAnn.max() == 0 ? val : sizeAnn.max();
 			// System.out.println(""+sizeAnn.toString());
 		} else {
-			log("max =null");
+			log("Size annotation =null");
 			return val;
 		}
 

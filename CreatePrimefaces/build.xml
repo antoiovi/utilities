@@ -8,24 +8,24 @@
 	<target name="compile">
 		<mkdir dir="build/classes" />
 		<javac srcdir="src" destdir="build/classes">
-			  <classpath>
-				        <pathelement location="lib/analizec.jar" />
+			<classpath>
+				        <pathelement location="lib/validation-api-2.0.1.Final.jar" />
 				    </classpath>
 		</javac>
 	</target>
 
 	<target name="jar">
 		<mkdir dir="build/jar" />
-		<jar destfile="build/jar/createxhtml.jar" basedir="build/classes">
-			<zipgroupfileset dir="lib" includes="analizec.jar" />
+		<jar destfile="build/jar/analizec.jar" basedir="build/classes">
+			<zipgroupfileset dir="lib" includes="validation-api-2.0.1.Final.jar" />
 			<manifest>
-				<attribute name="Main-Class" value="com.antoiovi.createxhtml.Create" />
+				<attribute name="Main-Class" value="com.antoiovi.analizec.Analizec" />
 			</manifest>
 		</jar>
 	</target>
 
 	<target name="run">
-		<java jar="build/jar/createxhtml.jar" fork="true" />
+		<java jar="build/jar/analizec.jar" fork="true" />
 	</target>
 
 </project>

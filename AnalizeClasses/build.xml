@@ -8,18 +8,14 @@
 	<target name="compile">
 		<mkdir dir="build/classes" />
 		<javac srcdir="src" destdir="build/classes">
-			<classpath>
-				        <pathelement location="lib/validation-api-1.0.0.GA.jar" />
-				    </classpath>
 		</javac>
 	</target>
 
 	<target name="jar">
 		<mkdir dir="build/jar" />
 		<jar destfile="build/jar/analizec.jar" basedir="build/classes">
-			<zipgroupfileset dir="lib" includes="validation-api-1.0.0.GA.jar" />
 			<manifest>
-				<attribute name="Main-Class" value="com.antoiovi.analizec.Analizec" />
+				<attribute name="Main-Class" value="com.antoiovi.analizec.App" />
 			</manifest>
 		</jar>
 	</target>

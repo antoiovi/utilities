@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+		xmlns:ui="http://java.sun.com/jsf/facelets"
+		xmlns:h="http://java.sun.com/jsf/html"
+		xmlns:f="http://java.sun.com/jsf/core"
+		xmlns:p="http://primefaces.org/ui>
+ <ui:define name="content">
+	<p:dataTable var="persone" value="#{personeBean.allPersone}"> 
+		<p:column headerText="personaId" width="25">
+			<h:outputText value="#{persone.personaId}"/>
+		</p:column>
+		<p:column headerText="username" width="25">
+			<h:outputText value="#{persone.username}"/>
+		</p:column>
+		<p:column headerText="nome" width="25">
+			<h:outputText value="#{persone.nome}"/>
+		</p:column>
+		<p:column headerText="cognome" width="25">
+			<h:outputText value="#{persone.cognome}"/>
+		</p:column>
+		<p:column headerText="email" width="25">
+			<h:outputText value="#{persone.email}"/>
+		</p:column>
+		<p:column headerText="password" width="25">
+			<h:outputText value="#{persone.password}"/>
+		</p:column>
+	</p:dataTable>
+ </ui:define>
+</ui:composition>

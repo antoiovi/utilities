@@ -1,6 +1,5 @@
 package com.antoiovi.analizec;
 
-import com.antoiovi.analizec.TaskOnClass;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -100,7 +99,7 @@ public class Analizec {
 		logDebug("Full PATH   = " + path);
 		try {
 			final URL jarUrl = new URL(path);
-			urlclsloaderChild = new URLClassLoader(new URL[] { new URL(path) }, App.class.getClassLoader());
+			urlclsloaderChild = new URLClassLoader(new URL[] { new URL(path) }, Analizec.class.getClassLoader());
 			if (urlclsloaderChild != null) {
 				log("pathInwar---- Child created.. " + urlclsloaderChild.toString());
 			} else {
@@ -229,7 +228,7 @@ public class Analizec {
 		String path = "file://" + dir + "/" + nomejar;
 		logDebug("Full PATH  = " + path);
 		try {
-			urlclsloaderChild = new URLClassLoader(new URL[] { new URL(path) }, App.class.getClassLoader());
+			urlclsloaderChild = new URLClassLoader(new URL[] { new URL(path) }, Analizec.class.getClassLoader());
 			if (urlclsloaderChild != null)
 				System.out.println("Child creato regolarmente.. " + urlclsloaderChild.toString());
 			else
@@ -317,6 +316,7 @@ public class Analizec {
 		//task.executeTaskOnSelectedClass();
 		task.createTable();
 		task.createForm();
+		task.craeteManagedBean();
 	}
 
 	protected static void log(String s) {
