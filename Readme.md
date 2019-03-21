@@ -51,4 +51,17 @@ A few utilities class
 A few class created as example of connecting to serial port using lib jssc-2.8.0.jar
 
 Also wrapper classes to be used for connection scope.
- 
+
+$ mvn package
+Yuou must create this structure directory :
+
+```sh
+|-serial-1.jar
+ |-lib
+    |_jssc-2.8.0.jar
+```
+and execute :
+```
+$sudo java -jar serial-1.jar
+```
+If you have permisions on /dev/ttyXX you don't need sudo;
