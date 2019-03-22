@@ -4,6 +4,7 @@ import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
+import jssc.SerialPortTimeoutException;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -142,9 +143,13 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
 
  // @Override
   public synchronized void serialEvent(SerialPortEvent serialEvent) {
-    if (serialEvent.isRXCHAR()) {
+	  System.out.println("Serial event ...");
+	  if (serialEvent.isRXCHAR()) {
+    	System.out.println("Serial event isRXCHAR");
       try {
         byte[] buf = port.readBytes(serialEvent.getEventValue());
+        
+        System.out.println("serialEventGetValue= "+String.valueOf(buf));
         int next = 0;
         while(next < buf.length) {
           while(next < buf.length && outToMessage.hasRemaining()) {
@@ -157,6 +162,8 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
             inFromSerial.compact();
           }
           outToMessage.flip();
+          System.out.println("outToMessage= "+String.valueOf(outToMessage));
+
           if(outToMessage.hasRemaining()) {
             char[] chars = new char[outToMessage.remaining()];
             outToMessage.get(chars);
@@ -171,11 +178,26 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
   }
 
   /**
-   * This method is intented to be extended to receive messages
-   * coming from serial port.
+   * Prima modifica
    */
   protected void message(char[] chars, int length) {
-    // Empty
+	  }
+  
+public String readString(int byteCount, int timeout) throws SerialPortException, SerialPortTimeoutException {
+	  char buf[]=new char[256];
+	byte b[]=new byte[1];
+	int count=0;
+	do {
+		b=port.readBytes();
+
+		//System.out.print(b[0]);
+		buf[count]=(char)b[0];
+		
+		count++;
+	}while(b[0]!='\n'|| count<256);
+	System.out.print("Value of buf ..."+String.valueOf(buf));
+	return port.readString(byteCount, timeout);
+	  
   }
 
 public boolean portIsOpened(){
