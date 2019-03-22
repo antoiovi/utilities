@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.MissingResourceException;
 
+import java.util.LinkedList;
 
 public class Serial implements SerialPortEventListener {
 
@@ -37,6 +38,11 @@ public class Serial implements SerialPortEventListener {
   private static final int OUT_BUFFER_CAPACITY = 128;
   private ByteBuffer inFromSerial = ByteBuffer.allocate(IN_BUFFER_CAPACITY);
   private CharBuffer outToMessage = CharBuffer.allocate(OUT_BUFFER_CAPACITY);
+
+  private static final int IN_FIFO_CAPACITY = 128;
+
+private LinkedList<String> fifo;
+
 
   public Serial() throws SerialException {
    /* this(PreferencesData.get("serial.port"),
@@ -121,6 +127,7 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
     if (port == null) {
       throw new SerialNotFoundException(format(tr("Serial port ''{0}'' not found. Did you select the right one from the Tools > Serial Port menu?"), iname));
     }
+    fifo = new LinkedList<String>();
   }
 
   public void setup() {
@@ -148,8 +155,9 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
     	System.out.println("Serial event isRXCHAR");
       try {
         byte[] buf = port.readBytes(serialEvent.getEventValue());
-        
-        System.out.println("serialEventGetValue= "+String.valueOf(buf));
+        System.out.println("serialEventGetValue= "+serialEvent.getEventValue());
+
+        System.out.println("buf: "+String.valueOf(buf));
         int next = 0;
         while(next < buf.length) {
           while(next < buf.length && outToMessage.hasRemaining()) {
@@ -162,8 +170,12 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
             inFromSerial.compact();
           }
           outToMessage.flip();
+          
           System.out.println("outToMessage= "+String.valueOf(outToMessage));
-
+          if(fifo.size()>=this.IN_FIFO_CAPACITY)
+        	  fifo.removeFirst();
+           fifo.add(String.valueOf(outToMessage));
+        
           if(outToMessage.hasRemaining()) {
             char[] chars = new char[outToMessage.remaining()];
             outToMessage.get(chars);
@@ -177,12 +189,21 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
     }
   }
 
+  private   synchronized String getFirstFifo() {
+	  if(!fifo.isEmpty())
+	 return fifo.getFirst();
+	  else
+		  return null;
+  }
   /**
    * Prima modifica
    */
   protected void message(char[] chars, int length) {
 	  }
-  
+  public String readString() {
+	  
+	  return this.getFirstFifo();
+  }
 public String readString(int byteCount, int timeout) throws SerialPortException, SerialPortTimeoutException {
 	  char buf[]=new char[256];
 	byte b[]=new byte[1];
@@ -192,12 +213,12 @@ public String readString(int byteCount, int timeout) throws SerialPortException,
 
 		//System.out.print(b[0]);
 		buf[count]=(char)b[0];
-		
+
 		count++;
 	}while(b[0]!='\n'|| count<256);
 	System.out.print("Value of buf ..."+String.valueOf(buf));
 	return port.readString(byteCount, timeout);
-	  
+
   }
 
 public boolean portIsOpened(){

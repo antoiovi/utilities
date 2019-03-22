@@ -70,9 +70,12 @@ public class App
     private void readString() throws SerialPortException, SerialPortTimeoutException {
     	char buffer[]=new char[256];
     	
-    	String msg=serial.readString(256,timeout);
-    	
-    	System.out.println(msg);
-    	
+    	//String msg=serial.readString(256,timeout);
+    	String msg=serial.readString();
+    	if(msg!=null)
+    	System.out.println("Letto "+msg);
+    	else 
+        	System.out.println("Letto null..");
+
      }
 }
