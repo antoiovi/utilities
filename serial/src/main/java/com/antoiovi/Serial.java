@@ -1,11 +1,27 @@
+/**
+ * Questa classe è stata realizzata adattando alle proproe esigenze la classe processin.app.Serial
+ * che si trova nella realizzazione dell'ide Arduino con licenza GNU
+ * Le classi liberamentre estratte sono Serial.java, SerialException.java, SerialRead.java
+ * 
+ * Utilizza la la libreria jssc per connetersi ad una porta seriale e ricevere ed inviare dati ad essa;
+ * 
+ * Da utilizzare per scopo didattico per mostrare la possibilità di connessione tramite java ad una 
+ * porta seriale, porta usb, e quindi anche Arduino
+ * 
+ * Sito di riferimento www.antoiovi.com; www.worpress.antoiovi.com
+ * Antonello Iovino 
+ * 03/2019
+ * 
+ */
+
+
 package com.antoiovi;
 
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
-import jssc.SerialPortTimeoutException;
-
+ 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -14,21 +30,9 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.List;
-import java.util.MissingResourceException;
-
+ 
 
 public class Serial implements SerialPortEventListener {
-
-  //PApplet parent;
-
-  // properties can be passed in for default values
-  // otherwise defaults to 9600 N81
-
-  // these could be made static, which might be a solution
-  // for the classloading problem.. because if code ran again,
-  // the static class would have an object that could be closed
 
   private SerialPort port;
 
@@ -37,62 +41,95 @@ public class Serial implements SerialPortEventListener {
   private static final int OUT_BUFFER_CAPACITY = 128;
   private ByteBuffer inFromSerial = ByteBuffer.allocate(IN_BUFFER_CAPACITY);
   private CharBuffer outToMessage = CharBuffer.allocate(OUT_BUFFER_CAPACITY);
-
+  
+  // Valori di deafult :
+  String  name="/dev/ttyUSB0";
+  int baudRate =9600;
+  int parity=SerialPort.PARITY_NONE;
+  int databits=8;
+  double d =1.0; 
+  boolean RTS=true;
+  boolean DTR=true;
+  
+  
+  
+  
+/**
+ * Inizzializza con parametri di default
+ * @throws SerialException
+ */
   public Serial() throws SerialException {
-   /* this(PreferencesData.get("serial.port"),
-      PreferencesData.getInteger("serial.debug_rate", 9600),
-      PreferencesData.getNonEmpty("serial.parity", "N").charAt(0),
-      PreferencesData.getInteger("serial.databits", 8),
-      PreferencesData.getFloat("serial.stopbits", 1),
-      !BaseNoGui.getBoardPreferences().getBoolean("serial.disableRTS"),
-      !BaseNoGui.getBoardPreferences().getBoolean("serial.disableDTR"));*/
+	  init(name, baudRate, parity,  databits,  d,  RTS, DTR);
+  }
+/**
+ *   Inizzializza con parametri di default tranne Nome Porta
+ * @param iname
+ * @throws SerialException
+ */
+  public Serial(String iname) throws SerialException {
+	  init(iname, baudRate, parity,  databits,  d,  RTS, DTR);
   }
 
+/**
+ * 
+ * @param iname
+ * @param irate
+ * @param parityNone
+ * @param idatabits
+ * @param d
+ * @param setRTS
+ * @param setDTR
+ * @throws SerialException
+ */
+public Serial(String iname, int irate, int parityNone, int idatabits, double d, boolean setRTS, boolean setDTR) throws SerialException {
 
-  public  Serial(String iname, int irate, int parityNone, int idatabits, double d, boolean setRTS, boolean setDTR) throws SerialException {
-
-
-/*		this.Serial(iname, SerialPort.BAUDRATE_9600, SerialPort.PARITY_NONE, SerialPort.DATABITS_8,
-				SerialPort.STOPBITS_1, true, true);*/
-
-	  //if (port != null) port.close();
-    //this.parent = parent;
-    //parent.attach(this);
-
-    resetDecoding(StandardCharsets.UTF_8);
-
-    int parity = SerialPort.PARITY_NONE;
-    if (parityNone == 'E') parity = SerialPort.PARITY_EVEN;
-    if (parityNone == 'O') parity = SerialPort.PARITY_ODD;
-
-    int stopbits = SerialPort.STOPBITS_1;
-    if (d == 1.5f) stopbits = SerialPort.STOPBITS_1_5;
-    if (d == 2) stopbits = SerialPort.STOPBITS_2;
-
-    try {
-      port = new SerialPort(iname);
-      port.openPort();
-      boolean res = port.setParams(irate, idatabits, stopbits, parity, setRTS, setDTR);
-      if (!res) {
-        System.err.println(format(tr("Error while setting serial port parameters: {0} {1} {2} {3}"),
-                                  irate, parityNone, idatabits, d));
-      }
-      port.addEventListener(this);
-    } catch (SerialPortException e) {
-      if (e.getPortName().startsWith("/dev") && SerialPortException.TYPE_PERMISSION_DENIED.equals(e.getExceptionType())) {
-        throw new SerialException(format(tr("Error opening serial port ''{0}''. Try consulting the documentation at http://playground.arduino.cc/Linux/All#Permission"), iname));
-      }
-      throw new SerialException(format(tr("Error opening serial port ''{0}''."), iname), e);
+	init(iname, irate,  parityNone,  idatabits,  d,  setRTS, setDTR);
+	
     }
 
-    if (port == null) {
-      throw new SerialNotFoundException(format(tr("Serial port ''{0}'' not found. Did you select the right one from the Tools > Serial Port menu?"), iname));
-    }
-  }
+  /**
+   * Inzzializza la porta
+   * @throws SerialException
+   */
+  private void init(String iname, int irate, int parityNone, int idatabits, double d, boolean setRTS, boolean setDTR) throws SerialException 
+ {
+	
+	  resetDecoding(StandardCharsets.UTF_8);
 
-  public void setup() {
-    //parent.registerCall(this, DISPOSE);
+	    int parity = SerialPort.PARITY_NONE;
+	    if (parityNone == 'E') parity = SerialPort.PARITY_EVEN;
+	    if (parityNone == 'O') parity = SerialPort.PARITY_ODD;
+
+	    int stopbits = SerialPort.STOPBITS_1;
+	    if (d == 1.5f) stopbits = SerialPort.STOPBITS_1_5;
+	    if (d == 2) stopbits = SerialPort.STOPBITS_2;
+
+	    try {
+	      port = new SerialPort(iname);
+	      port.openPort();
+	      boolean res = port.setParams(irate, idatabits, stopbits, parity, setRTS, setDTR);
+	      if (!res) {
+	        System.err.println(format(tr("Error while setting serial port parameters: {0} {1} {2} {3}"),
+	                                  irate, parityNone, idatabits, d));
+	      }
+	      port.addEventListener(this);
+	    } catch (SerialPortException e) {
+	      if (e.getPortName().startsWith("/dev") && SerialPortException.TYPE_PERMISSION_DENIED.equals(e.getExceptionType())) {
+	        throw new SerialException(format(tr("Error opening serial port ''{0}''. Try consulting the documentation at http://playground.arduino.cc/Linux/All#Permission"), iname));
+	      }
+	      throw new SerialException(format(tr("Error opening serial port ''{0}''."), iname), e);
+	    }
+
+	    if (port == null) {
+	      throw new SerialNotFoundException(format(tr("Serial port ''{0}'' not found. Did you select the right one from the Tools > Serial Port menu?"), iname));
+	    }
+	  
   }
+  
+  /**
+   * Chiude la porta e libera le risorse
+   * @throws IOException
+   */
 
   public void dispose() throws IOException {
     if (port != null) {
@@ -109,6 +146,10 @@ public class Serial implements SerialPortEventListener {
   }
 
  // @Override
+   /**
+   * Resta in ascolto della porta e riceve gli eventi;
+   * Trasmette le stringhe lette  al metodo   message(char[] chars, int length) 
+   */
   public synchronized void serialEvent(SerialPortEvent serialEvent) {
 	  log("Serial event ...");
 	  if (serialEvent.isRXCHAR()) {
@@ -145,29 +186,15 @@ public class Serial implements SerialPortEventListener {
   }
 
   /**
-   * Prima modifica
+   * Metodo da socrascrivere per effettuare la lettura della serial port
+   * @param chars
+   * @param length
    */
   protected void message(char[] chars, int length) {
 
   
   }
-  
-public String readString(int byteCount, int timeout) throws SerialPortException, SerialPortTimeoutException {
-	  char buf[]=new char[256];
-	byte b[]=new byte[1];
-	int count=0;
-	do {
-		b=port.readBytes();
-
-		//System.out.print(b[0]);
-		buf[count]=(char)b[0];
-		
-		count++;
-	}while(b[0]!='\n'|| count<256);
-	log("Value of buf ..."+String.valueOf(buf));
-	return port.readString(byteCount, timeout);
-	  
-  }
+ 
 
 public boolean portIsOpened(){
   return port.isOpened();

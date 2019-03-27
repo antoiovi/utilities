@@ -1,50 +1,48 @@
+/**
+ * Programma per provare la libreria jscc per la lettura dati da porta seriale
+ * Serve solo per mostrare l'utilizzo della libreria, che vien richiamata dalla 
+ * classe Serial, che ricopre le chiamate alle funzioni della libreia
+ * Viene utilizzata la classe Serial che esegue i copitti sulla porta
+ * 
+ * Viene inzzializata ed aperta la porta
+ * vengono lette un certo numero di righe e poi chiude l'applicazione
+ * 
+ * 03/2019 Antonello IOvino 
+ * Sito di riferimento www.antoiovi.com; www.worpress.antoiovi.com
+ *
+ */
 package com.antoiovi;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import jssc.SerialPort;
-import jssc.SerialPortEvent;
-import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import jssc.SerialPortTimeoutException;
 
-/**
- * Hello world!
- *
- */
+
 public class App {
-	SerialPort serialPort;
 	String name = "/dev/ttyUSB0";
 	SerialRead serial;
-	int timeout = 5000;
-
+ 
 	public static void main(String[] args) {
 		System.out.println("Hello World!");
-
 		App p = new App();
 		p.init();
-
 	}
 
 	private void init() {
-		/*
-		 * String iname, int irate, int parityNone, int idatabits, float istopbits,
-		 * boolean setRTS, boolean setDTR) throws SerialException {
-		 */
-
+		
 		try {
 
-			serial = new SerialRead(name, 9600, SerialPort.PARITY_NONE, 8, 1.0, true, true);
+			serial = new SerialRead(name);
 			if (serial.portIsOpened()) {
 				System.out.println("Porta e apera..");
 				TimeUnit.SECONDS.sleep(1);
-				int count = 0;
-				do {
-					readString();
-					count++;
-					TimeUnit.SECONDS.sleep(2);
-				} while (count < 10);
+				System.out.println("Lettura dati ..");
+				
+				readString();
+
 				System.out.println("Chiusura porta seriale..");
 				serial.dispose();
 
@@ -53,26 +51,31 @@ public class App {
 		} catch (SerialException e) {
 			e.printStackTrace();
 		} catch (SerialPortException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+ 			e.printStackTrace();
 		} catch (SerialPortTimeoutException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+ 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+ 			e.printStackTrace();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			// Timeunit.Seconds.sleep(..) exception
+ 			e.printStackTrace();
 		}
 	}
 
-	private void readString() throws SerialPortException, SerialPortTimeoutException {
-		char buffer[] = new char[256];
+	/**
+	 * Legge un certo numero di righe e poi chiude l'applicazione
+	 * 
+	 */
+	
+	private void readString() throws SerialPortException, SerialPortTimeoutException, InterruptedException {
+		int count = 0;
+		do {
+			count++;
+			TimeUnit.SECONDS.sleep(2);
+			String msg = serial.getAnalogRead();
+			System.out.println(msg);
 
-		String msg = serial.getAnalogRead();
-
-		System.out.println(msg);
+		} while (count < 10);
 
 	}
 }
