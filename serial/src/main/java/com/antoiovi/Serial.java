@@ -48,39 +48,6 @@ public class Serial implements SerialPortEventListener {
       !BaseNoGui.getBoardPreferences().getBoolean("serial.disableDTR"));*/
   }
 
-  public Serial(int irate) throws SerialException {
-   /* this(PreferencesData.get("serial.port"), irate,
-      PreferencesData.getNonEmpty("serial.parity", "N").charAt(0),
-      PreferencesData.getInteger("serial.databits", 8),
-      PreferencesData.getFloat("serial.stopbits", 1),
-      !BaseNoGui.getBoardPreferences().getBoolean("serial.disableRTS"),
-      !BaseNoGui.getBoardPreferences().getBoolean("serial.disableDTR"));*/
-  }
-
-
-
-
-
-public static boolean touchForCDCReset(String iname) throws SerialException {
-    SerialPort serialPort = new SerialPort(iname);
-    try {
-      serialPort.openPort();
-      serialPort.setParams(1200, 8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
-      serialPort.setDTR(false);
-      serialPort.closePort();
-      return true;
-    } catch (SerialPortException e) {
-      throw new SerialException(format(tr("Error touching serial port ''{0}''."), iname), e);
-    } finally {
-      if (serialPort.isOpened()) {
-        try {
-          serialPort.closePort();
-        } catch (SerialPortException e) {
-          // noop
-        }
-      }
-    }
-  }
 
   public  Serial(String iname, int irate, int parityNone, int idatabits, double d, boolean setRTS, boolean setDTR) throws SerialException {
 
@@ -143,13 +110,13 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
 
  // @Override
   public synchronized void serialEvent(SerialPortEvent serialEvent) {
-	  System.out.println("Serial event ...");
+	  log("Serial event ...");
 	  if (serialEvent.isRXCHAR()) {
-    	System.out.println("Serial event isRXCHAR");
+    	log("Serial event isRXCHAR");
       try {
         byte[] buf = port.readBytes(serialEvent.getEventValue());
         
-        System.out.println("serialEventGetValue= "+String.valueOf(buf));
+        log("serialEventGetValue= "+String.valueOf(buf));
         int next = 0;
         while(next < buf.length) {
           while(next < buf.length && outToMessage.hasRemaining()) {
@@ -162,7 +129,7 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
             inFromSerial.compact();
           }
           outToMessage.flip();
-          System.out.println("outToMessage= "+String.valueOf(outToMessage));
+          log("outToMessage= "+String.valueOf(outToMessage));
 
           if(outToMessage.hasRemaining()) {
             char[] chars = new char[outToMessage.remaining()];
@@ -181,7 +148,9 @@ public static boolean touchForCDCReset(String iname) throws SerialException {
    * Prima modifica
    */
   protected void message(char[] chars, int length) {
-	  }
+
+  
+  }
   
 public String readString(int byteCount, int timeout) throws SerialPortException, SerialPortTimeoutException {
 	  char buf[]=new char[256];
@@ -195,7 +164,7 @@ public String readString(int byteCount, int timeout) throws SerialPortException,
 		
 		count++;
 	}while(b[0]!='\n'|| count<256);
-	System.out.print("Value of buf ..."+String.valueOf(buf));
+	log("Value of buf ..."+String.valueOf(buf));
 	return port.readString(byteCount, timeout);
 	  
   }
@@ -272,7 +241,7 @@ public boolean portIsOpened(){
    * I think of something slightly more intelligent to do.
    */
   private static void errorMessage(String where, Throwable e) {
-    System.err.println(format(tr("Error inside Serial.{0}()"), where));
+    System.err.println(format("Error inside Serial.{0}()", where));
     e.printStackTrace();
   }
   public static String tr(String s) {
@@ -288,22 +257,9 @@ public boolean portIsOpened(){
 
 	    return MessageFormat.format(fmt, args);
 	  }
-  /*public static String tr(String s) {
-	    String res;
-	    try {
-	      if (i18n == null)
-	        res = s;
-	      else
-	        res = i18n.getString(s);
-	    } catch (MissingResourceException e) {
-	      res = s;
-	    }
-
-	    // The single % is the arguments selector in .PO files.
-	    // We must put double %% inside the translations to avoid
-	    // getting .PO processing in the way.
-	    res = res.replace("%%", "%");
-
-	    return res;
-	  }*/
+  
+  void log(String msg){
+	  //System.out.println(msg);
+  }
+  
 }
