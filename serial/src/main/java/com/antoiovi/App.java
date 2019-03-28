@@ -96,9 +96,8 @@ public class App {
 		do {
 			count++;
 			TimeUnit.SECONDS.sleep(2);
-			String msg = serial.getAnalogRead();
+			String msg = serial.getFirst();
 			System.out.println(msg);
-
 		} while (count < 10);
 
 	}
