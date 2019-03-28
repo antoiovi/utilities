@@ -6,7 +6,7 @@
  * Utilizza la la libreria jssc per connetersi ad una porta seriale e ricevere ed inviare dati ad essa;
  * 
  * Da utilizzare per scopo didattico per mostrare la possibilità di connessione tramite java ad una 
- * porta seriale, porta usb, e quindi anche Arduino
+ * porta seriale, porta usb, e quindi anche Arduino utilizzando la librearia jssc
  * 
  * Sito di riferimento www.antoiovi.com; www.worpress.antoiovi.com
  * Antonello Iovino 
