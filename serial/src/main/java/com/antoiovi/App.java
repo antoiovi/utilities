@@ -78,24 +78,20 @@ public class App {
 				System.out.println("Porta NON e aperta !!!");
 		} catch (SerialException e) {
 			e.printStackTrace();
-		} catch (SerialPortException e) {
- 			e.printStackTrace();
-		} catch (SerialPortTimeoutException e) {
- 			e.printStackTrace();
 		} catch (IOException e) {
  			e.printStackTrace();
 		} catch (InterruptedException e) {
 			// Timeunit.Seconds.sleep(..) exception
  			e.printStackTrace();
 		}
-	}
+ 	}
 
 	/**
 	 * Legge un certo numero di righe e poi chiude l'applicazione
 	 * 
 	 */
 	
-	private void readString() throws SerialPortException, SerialPortTimeoutException, InterruptedException {
+	private void readString() throws  InterruptedException {
 		int count = 0;
 		do {
 			count++;
@@ -106,4 +102,6 @@ public class App {
 		} while (count < 10);
 
 	}
+
+     
 }

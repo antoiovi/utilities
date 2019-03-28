@@ -119,7 +119,10 @@ public Serial(String iname, int irate, int parityNone, int idatabits, double d, 
 	      }
 	      throw new SerialException(format(tr("Error opening serial port ''{0}''."), iname), e);
 	    }
-
+    if (port == null) {
+      throw new SerialNotFoundException(format(tr("Serial port ''{0}'' not found. Did you select the right one from the Tools > Serial Port menu?"), iname));
+    }
+  
 	    if (port == null) {
 	      throw new SerialNotFoundException(format(tr("Serial port ''{0}'' not found. Did you select the right one from the Tools > Serial Port menu?"), iname));
 	    }
@@ -156,7 +159,7 @@ public Serial(String iname, int irate, int parityNone, int idatabits, double d, 
     	log("Serial event isRXCHAR");
       try {
         byte[] buf = port.readBytes(serialEvent.getEventValue());
-        
+       
         log("serialEventGetValue= "+String.valueOf(buf));
         int next = 0;
         while(next < buf.length) {
@@ -171,7 +174,6 @@ public Serial(String iname, int irate, int parityNone, int idatabits, double d, 
           }
           outToMessage.flip();
           log("outToMessage= "+String.valueOf(outToMessage));
-
           if(outToMessage.hasRemaining()) {
             char[] chars = new char[outToMessage.remaining()];
             outToMessage.get(chars);
@@ -191,10 +193,9 @@ public Serial(String iname, int irate, int parityNone, int idatabits, double d, 
    * @param length
    */
   protected void message(char[] chars, int length) {
+	  }
 
-  
-  }
- 
+
 
 public boolean portIsOpened(){
   return port.isOpened();
